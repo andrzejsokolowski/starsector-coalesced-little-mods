@@ -6,7 +6,6 @@ import com.fs.starfarer.api.combat.BaseEveryFrameCombatPlugin
 import com.fs.starfarer.api.input.InputEventAPI
 import com.fs.starfarer.api.ui.UIPanelAPI
 import com.fs.state.AppDriver
-import coalescedlittlemods.ClmModule
 import starterpack.bench.BenchImport
 import starterpack.uiframework.ReflectionUtils.invoke
 
@@ -32,7 +31,6 @@ class TitleScreenHook : BaseEveryFrameCombatPlugin() {
     private var injectedInto: UIPanelAPI? = null
 
     override fun advance(amount: Float, events: MutableList<InputEventAPI>?) {
-        if (!ClmModule.STARTER_PACK.isEnabled) return
         if (Global.getCurrentState() != GameState.TITLE) {
             // Left the menu: drop the reference so returning here re-injects into the fresh panel.
             injectedInto = null

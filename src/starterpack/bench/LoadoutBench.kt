@@ -4,7 +4,6 @@ import com.fs.starfarer.api.fleet.FleetGoal
 import com.fs.starfarer.api.fleet.FleetMemberType
 import com.fs.starfarer.api.mission.FleetSide
 import com.fs.starfarer.api.mission.MissionDefinitionAPI
-import coalescedlittlemods.ClmModule
 import starterpack.apply.TemplateApplier
 import starterpack.model.Template
 
@@ -50,18 +49,6 @@ object LoadoutBench {
     fun defineMission(api: MissionDefinitionAPI) {
         api.initFleet(FleetSide.PLAYER, "ISS", FleetGoal.ATTACK, false)
         api.initFleet(FleetSide.ENEMY, "ISS", FleetGoal.ATTACK, true)
-
-        // The mission list cannot be changed at runtime, so with the module off the bench stays
-        // listed but stands empty and saves nothing.
-        if (!ClmModule.STARTER_PACK.isEnabled) {
-            api.setFleetTagline(FleetSide.PLAYER, "StarterPack")
-            api.setFleetTagline(FleetSide.ENEMY, "Nobody. Do not fight this.")
-            api.addBriefingItem("StarterPack is switched off in the Coalesced Little Mods settings.")
-            api.addToFleet(FleetSide.PLAYER, PLACEHOLDER_VARIANT, FleetMemberType.SHIP, "Placeholder", true)
-            api.addToFleet(FleetSide.ENEMY, OPPONENT_VARIANT, FleetMemberType.SHIP, "Formality", false)
-            api.initMap(-6000f, 6000f, -6000f, 6000f)
-            return
-        }
 
         val template = runCatching { BenchState.templateForBench() }.getOrNull()
         val ships = template?.ships.orEmpty()

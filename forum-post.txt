@@ -4,10 +4,10 @@
 [/center]
 [center][b]
 WHAT DOES THIS MOD DO?
-- Puts eight of my small mods into one download. Each one has its own on/off switch.
+- Puts eight of my small mods into one download. The ones that add campaign content have their own on/off switch.
 
 
-One mod in the list instead of eight. Don't want one of them? Switch it off in LunaLib's settings and it is gone after a restart.
+One mod in the list instead of eight. Don't want the Cloning buildings, the Private Arsenal or the Gambling Den? Switch it off in LunaLib's settings and it is gone from your next new game or save load.
 
 The code is fully open source. You don't have to credit me. Claude Code built this anyway.
 [color=red]Requires [b]LunaLib[/b] and [b]LazyLib[/b].[/color]
@@ -27,7 +27,8 @@ The code is fully open source. You don't have to credit me. Claude Code built th
 [hr][center][size=12pt][b]Settings[/b][/size][/center][hr]
 [list]
 [li]In LunaLib's settings menu ([b]Shift+F2[/b] in the campaign), under [b]Coalesced Little Mods[/b].[/li]
-[li]The [b]Modules[/b] tab has one switch per module, all on by default. A switch takes effect the next time you start the game.[/li]
+[li]The [b]Modules[/b] tab has a switch for Cloning, Rev. Eng. Private Arsenal and Gambling Den, all on by default. A switch takes effect the next time you start a new game or load a save.[/li]
+[li]The other five are always on. They only do what you set up in them.[/li]
 [li]Every module keeps its own settings on its own tab.[/li]
 [/list]
 [/center]
@@ -35,7 +36,7 @@ The code is fully open source. You don't have to credit me. Claude Code built th
 [b]I already use some of these separately. What do I do?[/b]
 Disable the separate versions, then enable the pack. The game refuses to start if both are on, and tells you which ones to disable. Your saves keep working, and the pack copies your settings from the separate mods the first time it starts.
 [b]What happens when I switch a module off?[/b]
-It stops. Its buttons, dialogue options and menus disappear, and its buildings can no longer be built. Buildings you already have keep working, and nothing is removed from your save. Switch it back on and everything is back.
+Its buildings can no longer be built, and the Gambling Den leaves the bars. Buildings you already have keep working, and nothing is removed from your save. Switch it back on and everything is back.
 [b]Does the pack change the separate mods' settings?[/b]
 No. It only reads them once, so they are still there if you go back.
 [/spoiler]

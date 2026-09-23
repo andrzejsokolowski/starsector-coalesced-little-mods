@@ -27,9 +27,12 @@ import com.thoughtworks.xstream.XStream;
  * Entry point for Coalesced Little Mods.
  *
  * <p>Each module keeps the plugin it had as a mod of its own. This class holds one of each and
- * passes every game event on to the modules that are switched on, in {@link ClmModule} order. A
- * module that is off gets nothing, except the save setup in {@link #configureXStream} and whatever
- * it asks for through {@link WhileDisabled}.</p>
+ * passes every game event on to the modules that are switched on, in {@link ClmModule} order.</p>
+ *
+ * <p>Startup work reaches every module, because a module switched off at the main menu can be
+ * switched back on before a game starts. A module that is off for the current game gets no game
+ * events, except the save setup in {@link #configureXStream} and whatever it asks for through
+ * {@link WhileDisabled}.</p>
  */
 public class CoalescedLittleModsPlugin extends BaseModPlugin {
 
@@ -54,21 +57,18 @@ public class CoalescedLittleModsPlugin extends BaseModPlugin {
     public void onApplicationLoad() throws Exception {
         refuseSeparateCopies();
         SettingsImport.run();
+        readToggles("startup");
+        for (ModPlugin plugin : plugins.values()) plugin.onApplicationLoad();
+    }
 
-        List<String> on = new ArrayList<>();
+    /** Switches take effect when a game starts or loads, and hold until the next one. */
+    private static void readToggles(String when) {
+        ClmModule.readToggles();
         List<String> off = new ArrayList<>();
-        for (Map.Entry<ClmModule, ModPlugin> entry : plugins.entrySet()) {
-            ClmModule module = entry.getKey();
-            ModPlugin plugin = entry.getValue();
-            if (module.isEnabled()) {
-                plugin.onApplicationLoad();
-                on.add(module.displayName);
-            } else {
-                if (plugin instanceof WhileDisabled) ((WhileDisabled) plugin).onApplicationLoadWhileDisabled();
-                off.add(module.displayName);
-            }
+        for (ClmModule module : ClmModule.values()) {
+            if (!module.isEnabled()) off.add(module.displayName);
         }
-        log.info("Coalesced Little Mods: on " + on + ", off " + off);
+        log.info("Coalesced Little Mods (" + when + "): switched off " + off);
     }
 
     /**
@@ -91,6 +91,8 @@ public class CoalescedLittleModsPlugin extends BaseModPlugin {
 
     @Override
     public void onGameLoad(boolean newGame) {
+        // A new game already read them in onNewGame, before the sector was built.
+        if (!newGame) readToggles("save loaded");
         for (Map.Entry<ClmModule, ModPlugin> entry : plugins.entrySet()) {
             ModPlugin plugin = entry.getValue();
             if (entry.getKey().isEnabled()) {
@@ -114,6 +116,7 @@ public class CoalescedLittleModsPlugin extends BaseModPlugin {
 
     @Override
     public void onNewGame() {
+        readToggles("new game");
         forEachEnabled(ModPlugin::onNewGame);
     }
 

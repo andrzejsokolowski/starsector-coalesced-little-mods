@@ -1,6 +1,7 @@
 # Coalesced Little Mods
 
-Eight of Oddisz's small Starsector mods in one pack. Each one can be switched off on its own.
+Eight of Oddisz's small Starsector mods in one pack. The ones that add campaign content can be
+switched off on their own.
 
 | Module | Built from | What it does |
 | --- | --- | --- |
@@ -16,16 +17,21 @@ Eight of Oddisz's small Starsector mods in one pack. Each one can be switched of
 ## Settings
 
 Open LunaLib's settings (`Shift+F2` in the campaign) and pick
-**Coalesced Little Mods**. The **Modules** tab has one switch per module, all on by default. Each
-module's own settings are on its own tab.
+**Coalesced Little Mods**. Each module's own settings are on its own tab.
 
-A switch takes effect the next time you start the game.
+The **Modules** tab has a switch for Cloning, Rev. Eng. Private Arsenal and Gambling Den, all on
+by default. A switch takes effect the next time you start a new game or load a save.
 
-When a module is switched off:
+When one of these is switched off:
 
-- Its buttons, dialogue options and menus disappear, and its buildings can no longer be built.
-- Buildings you already have keep working, and nothing is removed from your saves.
-- Switching it back on brings everything back.
+- Cloning and Private Arsenal buildings can no longer be built. Buildings you already have keep
+  working.
+- Private Arsenal's faction entries leave the intel screen.
+- The Gambling Den no longer appears in bars. Your tokens stay.
+- Nothing is removed from your saves, and switching it back on brings everything back.
+
+StopBloatingMe, StopStackingMe, Intel Renewed, Hullmods - Renewed and StarterPack are always on.
+They only do what you set up in them, and their own settings control that.
 
 ## Coming from the separate mods
 

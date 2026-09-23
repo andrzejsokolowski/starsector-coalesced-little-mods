@@ -37,12 +37,6 @@ public class PrivateArsenalModPlugin extends BaseModPlugin implements WhileDisab
         enableDroneReplicatorInHub();
     }
 
-    /** Hubs a save already has keep taking their Drone Replicator with the module off. */
-    @Override
-    public void onApplicationLoadWhileDisabled() {
-        enableDroneReplicatorInHub();
-    }
-
     /** The faction entries on the intel screen belong to this module, so they go while it is off. */
     @Override
     public void onGameLoadWhileDisabled(boolean newGame) {

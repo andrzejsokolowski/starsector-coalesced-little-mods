@@ -6,7 +6,6 @@ import com.fs.starfarer.api.ui.CustomPanelAPI
 import com.fs.starfarer.api.ui.CutStyle
 import com.fs.starfarer.api.ui.UIPanelAPI
 import com.fs.starfarer.api.util.Misc
-import coalescedlittlemods.ClmModule
 import starterpack.ui.SetupPanel
 import starterpack.uiframework.Button
 import starterpack.uiframework.CustomPanel
@@ -37,9 +36,6 @@ object MenuButton {
     private const val EDGE_PAD_X = 24f
     private const val EDGE_PAD_Y = 24f + BUTTON_HEIGHT + 8f
 
-    /** With StopBloatingMe switched off its corner is free, so take it rather than float above a gap. */
-    private const val EDGE_PAD_Y_ALONE = 24f
-
     /** The button's own container, so we can drop it when the menu is rebuilt. */
     private var buttonPanel: CustomPanelAPI? = null
 
@@ -68,8 +64,7 @@ object MenuButton {
                 }
             }
         }
-        val padY = if (ClmModule.STOP_BLOATING_ME.isEnabled) EDGE_PAD_Y else EDGE_PAD_Y_ALONE
-        container.anchorInBottomRightOfParent(EDGE_PAD_X, padY)
+        container.anchorInBottomRightOfParent(EDGE_PAD_X, EDGE_PAD_Y)
         buttonPanel = container
     }
 

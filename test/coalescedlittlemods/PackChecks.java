@@ -65,7 +65,10 @@ public final class PackChecks {
 
     // --- Scenarios ------------------------------------------------------------------------------
 
-    /** Every module has a toggle on the Modules tab, on by default, and field ids never repeat. */
+    /**
+     * The modules that add campaign content have an on-by-default switch on the Modules tab, the
+     * others have none, and field ids never repeat.
+     */
     private static void settingsPage() throws Exception {
         JSONArray rows = csv(Path.of("data/config/LunaSettings.csv"));
         Map<String, JSONObject> byId = new HashMap<>();
@@ -75,7 +78,10 @@ public final class PackChecks {
             if (id.isEmpty()) continue;
             check(byId.put(id, row) == null, "Field id used twice: " + id);
         }
+        Set<ClmModule> switched = Set.of(ClmModule.CLONING, ClmModule.PRIVATE_ARSENAL, ClmModule.GAMBLING_DEN);
         for (ClmModule module : ClmModule.values()) {
+            check((module.toggleId != null) == switched.contains(module), module + " has the wrong kind of switch");
+            if (module.toggleId == null) continue;
             JSONObject row = byId.get(module.toggleId);
             check(row != null, "No toggle for " + module);
             check(row.getString("fieldType").equals("Boolean") && row.getString("defaultValue").equals("true"),
@@ -83,6 +89,8 @@ public final class PackChecks {
             check(row.getString("tab").equals("Modules"), "Toggle for " + module + " is not on the Modules tab");
             check(row.getString("fieldName").equals(module.displayName), "Toggle label differs from " + module.displayName);
         }
+        long switches = byId.keySet().stream().filter(id -> id.startsWith("clm_module_")).count();
+        check(switches == switched.size(), "The Modules tab has " + switches + " switches");
     }
 
     private static void importCarriesOldValues() throws Exception {
@@ -136,30 +144,53 @@ public final class PackChecks {
         check(LunaSettings.getInt(ID, "cloning_base_growth_tier1") == 50, "Default lost on a clean install");
     }
 
+    /** Switches are taken when a game starts or loads, then held until the next one. */
     private static void toggles() throws Exception {
         freshInstall();
-        LunaSettings.getBoolean(ID, ClmModule.CLONING.toggleId);
-        forgetToggles();
+        CoalescedLittleModsPlugin pack = new CoalescedLittleModsPlugin();
+        installRecorders(pack);
+        pack.onApplicationLoad();
         for (ClmModule module : ClmModule.values()) check(module.isEnabled(), module + " is off by default");
 
+        // Switched off at the main menu, then a new game started without a restart.
         setToggle(ClmModule.GAMBLING_DEN, false);
-        check(!ClmModule.GAMBLING_DEN.isEnabled(), "Switched-off module still reads as on");
-        check(ClmModule.STARTER_PACK.isEnabled(), "Switching one module off affected another");
+        check(ClmModule.GAMBLING_DEN.isEnabled(), "A switch changed before any game started or loaded");
+        pack.onNewGame();
+        check(!ClmModule.GAMBLING_DEN.isEnabled(), "Switched-off module still on in the new game");
+        check(ClmModule.CLONING.isEnabled(), "Switching one module off affected another");
 
-        // Held for the session: a change in the menu waits for the next launch.
+        // Flipped back during play: held through the rest of that game, saves included.
+        setToggle(ClmModule.GAMBLING_DEN, true);
+        pack.onGameLoad(true);
+        check(!ClmModule.GAMBLING_DEN.isEnabled(), "A switch changed in the middle of starting a game");
+        pack.beforeGameSave();
+        pack.afterGameSave();
+        check(!ClmModule.GAMBLING_DEN.isEnabled(), "A switch changed mid-game");
+        pack.onGameLoad(false);
+        check(ClmModule.GAMBLING_DEN.isEnabled(), "Loading a save did not pick up the switch");
+
+        // Switches that 0.1.0 had for the always-on modules may still be saved as off.
         JSONObject stored = new JSONObject(common.get("LunaSettings/" + ID + ".json"));
-        stored.put(ClmModule.GAMBLING_DEN.toggleId, true);
+        for (String gone : new String[]{"clm_module_stopbloatingme", "clm_module_stopstackingme",
+                "clm_module_intel_renewed", "clm_module_hullmods_renewed", "clm_module_starterpack"}) {
+            stored.put(gone, false);
+        }
         common.put("LunaSettings/" + ID + ".json", stored.toString());
         LunaSettings.SettingsCreator.refresh(ID);
-        check(!ClmModule.GAMBLING_DEN.isEnabled(), "A toggle changed mid-session");
+        pack.onGameLoad(false);
+        for (ClmModule module : ClmModule.values()) {
+            if (module.toggleId == null) check(module.isEnabled(), module + " was turned off by an old switch");
+        }
     }
 
     private static void ruleCondition() throws Exception {
         freshInstall();
         setToggle(ClmModule.GAMBLING_DEN, false);
+        ClmModule.readToggles();
         CLM_ModuleEnabled command = new CLM_ModuleEnabled();
         check(!command.execute("gd_add_option", null, tokens("GAMBLING_DEN"), null), "Den offered with its module off");
-        check(command.execute("x", null, tokens("STARTER_PACK"), null), "Condition false for a module that is on");
+        check(command.execute("x", null, tokens("CLONING"), null), "Condition false for a module that is on");
+        check(command.execute("x", null, tokens("STARTER_PACK"), null), "Condition false for an always-on module");
         check(!command.execute("x", null, tokens("NO_SUCH_MODULE"), null), "Unknown module name passed the condition");
         check(!command.execute("x", null, new ArrayList<>(), null), "Condition passed with no module named");
     }
@@ -186,18 +217,18 @@ public final class PackChecks {
             List<String> calls = entry.getValue().calls;
             boolean on = module != ClmModule.PRIVATE_ARSENAL && module != ClmModule.GAMBLING_DEN;
             check(calls.contains("configureXStream"), module + " missed the save setup");
+            check(calls.contains("onApplicationLoad"), module + " missed the startup work");
             if (on) {
-                check(calls.contains("onApplicationLoad") && calls.contains("onGameLoad")
-                        && calls.contains("onNewGameAfterTimePass"), module + " is on but missed events: " + calls);
+                check(calls.contains("onGameLoad") && calls.contains("onNewGameAfterTimePass"),
+                        module + " is on but missed events: " + calls);
             } else {
-                check(!calls.contains("onApplicationLoad") && !calls.contains("onGameLoad")
-                        && !calls.contains("onNewGameAfterTimePass") && !calls.contains("pickShipAI"),
-                        module + " is off but still ran: " + calls);
+                check(!calls.contains("onGameLoad") && !calls.contains("onNewGameAfterTimePass")
+                        && !calls.contains("pickShipAI"), module + " is off but still ran: " + calls);
             }
         }
         List<String> arsenal = recorders.get(ClmModule.PRIVATE_ARSENAL).calls;
-        check(arsenal.contains("onApplicationLoadWhileDisabled") && arsenal.contains("onGameLoadWhileDisabled"),
-                "Switched-off module did not get its while-disabled hooks: " + arsenal);
+        check(arsenal.contains("onGameLoadWhileDisabled"),
+                "Switched-off module did not get its while-disabled hook: " + arsenal);
         check(pick == recorders.get(ClmModule.STARTER_PACK).pick,
                 "AI pick should be the highest priority among modules that are on");
     }
@@ -265,24 +296,24 @@ public final class PackChecks {
         LunaSettingsLoader.INSTANCE.setHasLoaded(false);
         LunaSettingsLoader.setSettings(new HashMap<>());
         LunaSettingsLoader.getSettingsData().clear();
-        forgetToggles();
+        resetSwitches();
     }
 
+    /** Flips a switch the way the settings menu does. The pack only sees it when it next reads them. */
     private static void setToggle(ClmModule module, boolean on) throws Exception {
         LunaSettings.getBoolean(ID, module.toggleId);
         JSONObject stored = new JSONObject(common.get("LunaSettings/" + ID + ".json"));
         stored.put(module.toggleId, on);
         common.put("LunaSettings/" + ID + ".json", stored.toString());
         LunaSettings.SettingsCreator.refresh(ID);
-        forgetToggles();
     }
 
-    /** Toggles are held per launch; a new scenario is a new launch. */
-    private static void forgetToggles() {
+    /** A new scenario is a new launch: every module starts out on. */
+    private static void resetSwitches() {
         try {
             Field enabled = ClmModule.class.getDeclaredField("enabled");
             enabled.setAccessible(true);
-            for (ClmModule module : ClmModule.values()) enabled.set(module, null);
+            for (ClmModule module : ClmModule.values()) enabled.setBoolean(module, true);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
@@ -310,7 +341,6 @@ public final class PackChecks {
         @Override public void onGameLoad(boolean newGame) { calls.add("onGameLoad"); }
         @Override public void onNewGameAfterTimePass() { calls.add("onNewGameAfterTimePass"); }
         @Override public void configureXStream(XStream x) { calls.add("configureXStream"); }
-        @Override public void onApplicationLoadWhileDisabled() { calls.add("onApplicationLoadWhileDisabled"); }
         @Override public void onGameLoadWhileDisabled(boolean newGame) { calls.add("onGameLoadWhileDisabled"); }
 
         @Override

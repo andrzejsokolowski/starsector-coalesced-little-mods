@@ -11,7 +11,6 @@ import com.fs.starfarer.api.impl.campaign.econ.impl.ItemEffectsRepo;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.util.Misc;
 import coalescedlittlemods.CoalescedLittleModsPlugin;
-import coalescedlittlemods.WhileDisabled;
 import lunalib.backend.ui.settings.LunaSettingsLoader;
 import lunalib.lunaSettings.LunaSettings;
 import lunalib.lunaSettings.LunaSettingsListener;
@@ -22,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class plugin extends BaseModPlugin implements WhileDisabled {
+public class plugin extends BaseModPlugin {
 
     private static final String[] CLONING_INDUSTRY_IDS = {
         "oddisz_clone_vat_experiments",
@@ -41,12 +40,6 @@ public class plugin extends BaseModPlugin implements WhileDisabled {
         if (!LunaSettings.hasSettingsListenerOfClass(ResetListener.class)) {
             LunaSettings.addSettingsListener(new ResetListener());
         }
-    }
-
-    /** Cloning buildings a save already has keep taking their colony items with the module off. */
-    @Override
-    public void onApplicationLoadWhileDisabled() {
-        hookColonyItems();
     }
 
     private static void hookColonyItems() {

@@ -1,18 +1,15 @@
 fieldID,fieldName,fieldType,defaultValue,secondaryValue,fieldDescription,minValue,maxValue,tab
 clm_header_modules,Modules Header,Header,Modules,,,,,Modules
-clm_modules_text,Modules Text,Text,"Switch off any part of the pack you do not want. Changes take effect the next time you start the game.
+clm_modules_text,Modules Text,Text,"Switch off any of these modules you do not want. A change takes effect the next time you start a new game or load a save.
 
 Switching a module off never deletes anything from your saves, and switching it back on picks up where it left off. [Cloning] and [Rev. Eng. Private Arsenal] buildings you already have keep working while their module is off; only new ones can no longer be built.
+
+StopBloatingMe, StopStackingMe, Intel Renewed, Hullmods - Renewed and StarterPack are always on. They only do what you set up in them, and their own tabs control that.
 
 The first time the pack starts, it copies over your settings from the separate versions of these mods.",,,,,Modules
 clm_module_cloning,Cloning,Boolean,true,,Adds an industry path for increasing population growth massively at the cost of colony stability.,,,Modules
 clm_module_private_arsenal,Rev. Eng. Private Arsenal,Boolean,true,,"Adds an industry that lets the player deconstruct their weapons, fighters and ships and then buy them in a dedicated private arsenal for the player only.",,,Modules
-clm_module_stopbloatingme,StopBloatingMe,Boolean,true,,"Browse every ship, weapon, fighter, commodity, special item and bar quest from the [DE-BLOAT] button on the main menu, and blacklist the ones you never want to see.",,,Modules
-clm_module_stopstackingme,StopStackingMe,Boolean,true,,Stacks of weapons in cargo and the weapon picker show one sprite instead of a pile.,,,Modules
-clm_module_intel_renewed,Intel Renewed,Boolean,true,,"Declutters the intel screen: hide kinds of intel, categories and single entries, silence their popups, and search the list.",,,Modules
-clm_module_hullmods_renewed,Hullmods - Renewed,Boolean,true,,"Adds a filter panel to the refit hull-mod picker: search, favourites, a blacklist, custom groups, and filters by type and design type.",,,Modules
 clm_module_gambling_den,Gambling Den,Boolean,true,,"Sell surplus ships for tokens at ports of size 6 or more, and play Slots, Pachinko, Pinball, Blackjack and Relic Jackpot for weapons, hullmods, credits and more.",,,Modules
-clm_module_starterpack,StarterPack,Boolean,true,,"Build a starting fleet, cargo and character from the [STARTER PACK] button on the main menu, and have it applied to your new games.",,,Modules
 ,,,,,,,,
 cloning_header,Cloning Header,Header,Population growth,,,,,Cloning
 cloning_base_growth_tier1,Base Growth (Clone Vat Experiments),Int,50,,Base population growth points added by Clone Vat Experiments per tick.,0,10000,Cloning

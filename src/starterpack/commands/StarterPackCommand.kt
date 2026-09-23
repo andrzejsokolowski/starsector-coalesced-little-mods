@@ -1,6 +1,5 @@
 package starterpack.commands
 
-import coalescedlittlemods.ClmModule
 import org.lazywizard.console.BaseCommand
 import org.lazywizard.console.BaseCommand.CommandContext
 import org.lazywizard.console.BaseCommand.CommandResult
@@ -23,10 +22,6 @@ import starterpack.store.TemplateStore
 class StarterPackCommand : BaseCommand {
 
     override fun runCommand(args: String, context: CommandContext): CommandResult {
-        if (!ClmModule.STARTER_PACK.isEnabled) {
-            Console.showMessage("StarterPack is switched off in the Coalesced Little Mods settings.")
-            return CommandResult.ERROR
-        }
         val tokens = args.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
         val subcommand = tokens.firstOrNull()?.lowercase() ?: "apply"
 
