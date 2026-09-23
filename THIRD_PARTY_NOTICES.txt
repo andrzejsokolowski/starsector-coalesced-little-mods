@@ -1,0 +1,55 @@
+Coalesced Little Mods
+by Oddisz
+https://github.com/andrzejsokolowski/starsector-coalesced-little-mods
+
+Third-party code bundled in jars/CoalescedLittleMods.jar
+--------------------------------------------------------
+
+UIFramework by Starficz (from "Refit Filters")
+Licensed under LGPL-3.0-only: https://www.gnu.org/licenses/lgpl-3.0.html
+
+Vendored into five modules, each under its own package:
+    stopbloatingme.uiframework, stopstackingme.uiframework, intelrenewed.uiframework,
+    hullmodsrenewed.uiframework, starterpack.uiframework
+Unmodified apart from the package rename and the visibility changes needed to use it from
+outside its own package. Source is in src/<module>/uiframework in the repository above, and
+every file there keeps its original licence header.
+
+
+Gambling Den: Interastral Peace Casino
+Authors: Emanon6 and WolframSegler
+Reference version: 1.6.3
+
+The blackjack rules model in src/gamblingden/blackjack/BlackjackGame.java is
+adapted from Interastral Peace Casino's BlackjackGame.java and Deck.java.
+Its original notice in Licences.txt, under "For the rest of the mod:", is:
+
+Free to use, modify and redistribute for non commercial purposes.
+
+This permission applies to the adapted code. Changes include token accounting,
+bet validation, dealer-blackjack precedence, corrected split-hand settlement,
+split-ace rules, exact integer payouts, incremental dealer play, and safe exits.
+
+The full-card sprite drawing in CardArt.java follows Interastral's
+CardSprites.java and CardRenderingUtils.java. It adds private asset paths,
+preloading, alpha handling, and a missing-art guard. Its adapted code uses
+the same non-commercial permission above.
+
+
+Gambling Den: SVG-cards artwork
+Original creator: David Bellot
+Fork and improvements: Huub de Beer (htdebeer) and contributors
+Project: https://github.com/htdebeer/SVG-cards
+Upstream revision: 6d88bf9c594997b82bc5668ab0877a4e9b717665
+License: GNU Lesser General Public License, version 2.1
+
+graphics/gamblingden/cards/ contains 52 unmodified faces and the red back
+from the upstream png/2x exports of the deck used by Interastral Peace Casino.
+These artwork files retain their LGPL terms, independently of the code's
+non-commercial terms above. No additional restrictions apply to the artwork.
+
+licenses/svg-cards/ includes the original LICENSE, AUTHORS, README.md,
+svg-cards.svg, and editable svg-cards-indented.svg. The upstream README
+documents rendering and links its PNG export tools. The PNGs and source
+are unchanged. You can replace the loose card images without rebuilding
+the mod. No casino music, logos, or table artwork is included.

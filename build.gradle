@@ -1,0 +1,209 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.20'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Java and Kotlin both live in 'src', one package tree per module (Starsector convention).
+// Gambling Den's standalone checks and the pack's own checks live in 'test'.
+sourceSets.main.java.srcDirs = ['src']
+sourceSets.main.kotlin.srcDirs = ['src']
+sourceSets.test.java.srcDirs = ['test']
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Starsector core (obfuscated game classes + bundled libs)
+    compileOnly fileTree(dir: "${starsectorPath}/starsector-core", include: '*.jar')
+
+    // Library mods we depend on
+    compileOnly fileTree(dir: "${starsectorPath}/mods/LunaLib-2.0.5/jars", include: '*.jar')
+    compileOnly fileTree(dir: "${starsectorPath}/mods/LazyLib-3.0.0/jars", include: '*.jar')
+
+    // Console Commands is a SOFT dependency: data/console/commands.csv is only read when the console
+    // mod is active, so the command class is never loaded without it.
+    compileOnly fileTree(dir: "${starsectorPath}/mods/Console Commands-4.0.9/jars", include: '*.jar')
+
+    // The Kotlin runtime is provided AT RUNTIME by LazyLib (jars/internal/Kotlin-Runtime.jar) on
+    // Starsector's shared classloader, so we compile against it but must NOT bundle our own copy.
+    // kotlin.stdlib.default.dependency=false (gradle.properties) stops the plugin adding one.
+    compileOnly files("${starsectorPath}/mods/LazyLib-3.0.0/jars/internal/Kotlin-Runtime.jar")
+
+    testImplementation files(sourceSets.main.compileClasspath)
+}
+
+jar {
+    destinationDirectory = file('jars')
+    archiveFileName = 'CoalescedLittleMods.jar'
+}
+
+/**
+ * Starsector's script class loader refuses java.io, java.nio.file and java.lang.reflect to every
+ * class a mod ships, and the refusal lands wherever the class is first touched at runtime: at
+ * startup, or mid-click. Scan the compiled classes' constant pools so that mistake fails the build
+ * instead of the game. The vendored uiframework copies reach the game's own classes through the
+ * loader's permitted path and are exempt.
+ */
+tasks.register('checkNoForbiddenApis') {
+    dependsOn tasks.named('classes')
+    outputs.upToDateWhen { false }
+    doLast {
+        def banned = ['java/io/', 'java/nio/file/', 'java/lang/reflect/']
+        def offenders = []
+        ['classes/java/main', 'classes/kotlin/main'].each { sub ->
+            def root = layout.buildDirectory.dir(sub).get().asFile
+            if (!root.isDirectory()) return
+            root.eachFileRecurse { f ->
+                if (!f.name.endsWith('.class')) return
+                def rel = root.toPath().relativize(f.toPath()).toString().replace('\\', '/')
+                if (rel.contains('/uiframework/')) return
+                def text = new String(f.bytes, 'ISO-8859-1')
+                banned.each { needle -> if (text.contains(needle)) offenders << "${rel} references ${needle}" }
+            }
+        }
+        if (offenders) {
+            throw new GradleException("Forbidden API used (Starsector will refuse to load it):\n  " +
+                    offenders.join('\n  '))
+        }
+    }
+}
+
+tasks.register('regressionTest', JavaExec) {
+    description = "Gambling Den's slot, pachinko, pinball, blackjack and jackpot checks."
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'gamblingden.tests.RegressionChecks'
+    systemProperty 'org.lwjgl.librarypath', file("${starsectorPath}/starsector-core/native/windows").absolutePath
+    jvmArgs '--add-opens=java.base/java.util=ALL-UNNAMED', '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+            '--add-opens=java.base/java.text=ALL-UNNAMED', '--add-opens=java.desktop/java.awt.font=ALL-UNNAMED'
+}
+
+tasks.register('packChecks', JavaExec) {
+    description = 'The pack itself: module toggles, the one-time settings import, event routing, clash guard.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'coalescedlittlemods.PackChecks'
+    jvmArgs '--add-opens=java.base/java.util=ALL-UNNAMED', '--add-opens=java.base/java.lang=ALL-UNNAMED'
+}
+
+/** mod_info.json, the .version file and the Version Checker registration must agree. */
+tasks.register('checkVersionMetadata') {
+    doLast {
+        def infoFile = file('mod_info.json')
+        def versionFile = file('coalesced_little_mods.version')
+        def registrationFile = file('data/config/version/version_files.csv')
+        def parser = new groovy.json.JsonSlurper()
+        def info = parser.parse(infoFile, 'UTF-8')
+        def remote = parser.parse(versionFile, 'UTF-8')
+        def parts = ['major', 'minor', 'patch'].collect { remote.modVersion?.get(it)?.toString() }
+        if (parts.any { it == null || !(it ==~ /\d+/) } || info.version != parts.join('.'))
+            throw new GradleException('mod_info.json and coalesced_little_mods.version must have the same numeric version')
+        def masterUrl = 'https://raw.githubusercontent.com/andrzejsokolowski/starsector-coalesced-little-mods/main/coalesced_little_mods.version'
+        def downloadUrl = 'https://github.com/andrzejsokolowski/starsector-coalesced-little-mods/releases/latest/download/CoalescedLittleMods.zip'
+        if (info.id != 'coalesced_little_mods' || info.name != remote.modName)
+            throw new GradleException('Update metadata must identify Coalesced Little Mods')
+        if (info.updateCheckURL != masterUrl || remote.masterVersionFile != masterUrl)
+            throw new GradleException('Both update URLs must point to the published coalesced_little_mods.version file')
+        if (remote.directDownloadURL != downloadUrl)
+            throw new GradleException('The update download must point to the CoalescedLittleMods.zip release asset')
+        if (info.modThreadId?.toString() != remote.modThreadId?.toString())
+            throw new GradleException('mod_info.json and the .version file must name the same forum topic')
+        if (info.gameVersion != remote.starsectorVersion)
+            throw new GradleException('The supported Starsector versions do not match')
+        if (registrationFile.readLines('UTF-8').findAll { !it.trim().isEmpty() } != ['version file', 'coalesced_little_mods.version'])
+            throw new GradleException('Version Checker must register coalesced_little_mods.version')
+        logger.lifecycle("Update metadata verified for Coalesced Little Mods ${info.version}")
+    }
+}
+
+/**
+ * Checks the files that ship: no UTF-8 BOM (it breaks every Starsector JSON and CSV), every art path
+ * named in data or code exists here or in the base game, and every mission has its files.
+ */
+tasks.register('checkReleaseFiles') {
+    doLast {
+        def problems = []
+        def shipped = fileTree(projectDir) {
+            include 'mod_info.json', '*.version', 'data/**/*.json', 'data/**/*.csv', 'data/**/*.faction'
+        }
+        shipped.each { f ->
+            def bytes = f.bytes
+            if (bytes.length >= 3 && (bytes[0] & 0xFF) == 0xEF && (bytes[1] & 0xFF) == 0xBB && (bytes[2] & 0xFF) == 0xBF)
+                problems << "UTF-8 BOM in ${projectDir.toPath().relativize(f.toPath())}"
+        }
+
+        def core = file("${starsectorPath}/starsector-core")
+        def artRef = ~/graphics\/[A-Za-z0-9_\-\/. ]+?\.(png|jpg|webp)/
+        fileTree(projectDir) { include 'data/**', 'src/**/*.java', 'src/**/*.kt' }.each { f ->
+            (f.getText('UTF-8') =~ artRef).each { match ->
+                def path = match[0]
+                if (!file(path).isFile() && !new File(core, path).isFile())
+                    problems << "${projectDir.toPath().relativize(f.toPath())} names missing art ${path}"
+            }
+        }
+        def luna = new groovy.json.JsonSlurper().parse(file('data/config/LunaSettingsConfig.json'))
+        luna.each { modId, config -> if (!file(config.iconPath).isFile()) problems << "LunaLib icon missing: ${config.iconPath}" }
+
+        file('data/missions/mission_list.csv').readLines('UTF-8').drop(1).each { line ->
+            def id = line.split(',')[0].trim()
+            if (!id || id.startsWith('#')) return
+            ['descriptor.json', 'mission_text.txt', 'MissionDefinition.java'].each { name ->
+                if (!file("data/missions/${id}/${name}").isFile()) problems << "Mission ${id} has no ${name}"
+            }
+            def descriptor = new groovy.json.JsonSlurper().setType(groovy.json.JsonParserType.LAX)
+                    .parse(file("data/missions/${id}/descriptor.json"))
+            if (!file("data/missions/${id}/${descriptor.icon}").isFile()) problems << "Mission ${id} has no icon ${descriptor.icon}"
+        }
+
+        if (problems) throw new GradleException("Release files are not ready:\n  " + problems.join('\n  '))
+        logger.lifecycle('Release files verified')
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('regressionTest'), tasks.named('packChecks'), tasks.named('checkNoForbiddenApis'),
+            tasks.named('checkVersionMetadata'), tasks.named('checkReleaseFiles')
+}
+// The checks above use a standalone game-API harness, not a JUnit engine.
+tasks.named('test') { enabled = false }
+tasks.named('jar') { dependsOn tasks.named('checkNoForbiddenApis') }
+
+// Only what the game loads, plus the licences that travel with the card art.
+def releaseFiles = copySpec {
+    from(projectDir) {
+        include 'mod_info.json', 'coalesced_little_mods.version'
+        include 'THIRD_PARTY_NOTICES.txt', 'licenses/**'
+        include 'data/**', 'graphics/**', 'jars/CoalescedLittleMods.jar'
+    }
+}
+
+// Sync, not Copy: files that no longer ship must not linger in the staging folder.
+tasks.register('stageRelease', Sync) {
+    dependsOn tasks.named('jar')
+    with releaseFiles
+    into layout.projectDirectory.dir('CoalescedLittleMods')
+}
+
+// Package directly from the source files so stale staging contents cannot enter a release.
+tasks.register('releaseZip', Zip) {
+    dependsOn tasks.named('stageRelease'), tasks.named('check')
+    destinationDirectory = layout.projectDirectory
+    archiveFileName = 'CoalescedLittleMods.zip'
+    into('CoalescedLittleMods') { with releaseFiles }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "coalesced_little_mods",
+  "name": "Coalesced Little Mods",
+  "author": "Oddisz",
+  "utility": "false",
+  "version": "0.1.0",
+  "description": "Eight of Oddisz's small mods in one: Cloning, Rev. Eng. Private Arsenal, StopBloatingMe, StopStackingMe, Intel Renewed, Hullmods - Renewed, Gambling Den and StarterPack. Every one of them has its own on/off switch in the LunaLib settings, and all are on by default. Replaces the separate versions of these mods: disable those before enabling this one.",
+  "gameVersion": "0.98a-RC8",
+  "jars": ["jars/CoalescedLittleMods.jar"],
+  "modPlugin": "coalescedlittlemods.CoalescedLittleModsPlugin",
+  "updateCheckURL": "https://raw.githubusercontent.com/andrzejsokolowski/starsector-coalesced-little-mods/main/coalesced_little_mods.version",
+  "originalGameVersion": "0.98a-RC8",
+  "dependencies": [
+    {
+      "id": "lunalib",
+      "name": "LunaLib",
+      "version": { "major": "2", "minor": "0", "patch": "0" }
+    },
+    {
+      "id": "lw_lazylib",
+      "name": "LazyLib"
+    }
+  ]
+}

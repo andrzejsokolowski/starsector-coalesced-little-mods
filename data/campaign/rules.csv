@@ -1,0 +1,8 @@
+id,trigger,conditions,script,text,options
+# The den shows up as its own option at any port big enough to support one while its module is on.
+gd_add_option,PopulateOptions,"CLM_ModuleEnabled GAMBLING_DEN
+$hasMarket
+$marketSize >= 6
+$menuState == main
+$tradeMode == OPEN",,,20:gd_visit_den:Visit the gambling den,
+gd_visit_selected,DialogOptionSelected,$option == gd_visit_den,GD_OpenGamblingDen,,

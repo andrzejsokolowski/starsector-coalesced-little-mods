@@ -1,0 +1,174 @@
+fieldID,fieldName,fieldType,defaultValue,secondaryValue,fieldDescription,minValue,maxValue,tab
+clm_header_modules,Modules Header,Header,Modules,,,,,Modules
+clm_modules_text,Modules Text,Text,"Switch off any part of the pack you do not want. Changes take effect the next time you start the game.
+
+Switching a module off never deletes anything from your saves, and switching it back on picks up where it left off. [Cloning] and [Rev. Eng. Private Arsenal] buildings you already have keep working while their module is off; only new ones can no longer be built.
+
+The first time the pack starts, it copies over your settings from the separate versions of these mods.",,,,,Modules
+clm_module_cloning,Cloning,Boolean,true,,Adds an industry path for increasing population growth massively at the cost of colony stability.,,,Modules
+clm_module_private_arsenal,Rev. Eng. Private Arsenal,Boolean,true,,"Adds an industry that lets the player deconstruct their weapons, fighters and ships and then buy them in a dedicated private arsenal for the player only.",,,Modules
+clm_module_stopbloatingme,StopBloatingMe,Boolean,true,,"Browse every ship, weapon, fighter, commodity, special item and bar quest from the [DE-BLOAT] button on the main menu, and blacklist the ones you never want to see.",,,Modules
+clm_module_stopstackingme,StopStackingMe,Boolean,true,,Stacks of weapons in cargo and the weapon picker show one sprite instead of a pile.,,,Modules
+clm_module_intel_renewed,Intel Renewed,Boolean,true,,"Declutters the intel screen: hide kinds of intel, categories and single entries, silence their popups, and search the list.",,,Modules
+clm_module_hullmods_renewed,Hullmods - Renewed,Boolean,true,,"Adds a filter panel to the refit hull-mod picker: search, favourites, a blacklist, custom groups, and filters by type and design type.",,,Modules
+clm_module_gambling_den,Gambling Den,Boolean,true,,"Sell surplus ships for tokens at ports of size 6 or more, and play Slots, Pachinko, Pinball, Blackjack and Relic Jackpot for weapons, hullmods, credits and more.",,,Modules
+clm_module_starterpack,StarterPack,Boolean,true,,"Build a starting fleet, cargo and character from the [STARTER PACK] button on the main menu, and have it applied to your new games.",,,Modules
+,,,,,,,,
+cloning_header,Cloning Header,Header,Population growth,,,,,Cloning
+cloning_base_growth_tier1,Base Growth (Clone Vat Experiments),Int,50,,Base population growth points added by Clone Vat Experiments per tick.,0,10000,Cloning
+cloning_base_growth_tier2,Base Growth (Cloning),Int,125,,Base population growth points added by the Cloning Industry per tick.,0,10000,Cloning
+cloning_base_growth_tier3,Base Growth (Megafactory),Int,250,,Base population growth points added by the Cloning Megafactory per tick.,0,10000,Cloning
+cloning_scaling_factor,Scaling Factor,Double,0.15,,Controls how much colony size amplifies growth. Higher values make large colonies grow much faster.,0.0,2.0,Cloning
+cloning_global_mult,Global Multiplier,Double,1.0,,Global multiplier applied to all cloning industry growth.,0.0,10.0,Cloning
+cloning_reset_to_default,Reset to Default,Boolean,false,,Resets all settings above to their default values when toggled on.,,,Cloning
+,,,,,,,,
+repa_header_research,Research Header,Header,Research,,,,,Private Arsenal
+repa_re_days_no_core,Research days - no core,Int,30,,Days to reverse-engineer one item with no AI core assigned.,1,1000,Private Arsenal
+repa_re_days_gamma,Research days - gamma core,Int,20,,Days to reverse-engineer one item with a gamma core assigned.,1,1000,Private Arsenal
+repa_re_days_beta,Research days - beta core,Int,15,,Days to reverse-engineer one item with a beta core assigned.,1,1000,Private Arsenal
+repa_re_days_alpha,Research days - alpha core,Int,5,,Days to reverse-engineer one item with an alpha core assigned.,1,1000,Private Arsenal
+repa_re_days_omega,Research days - omega core,Int,2,,Days to reverse-engineer one item with an omega core assigned.,1,1000,Private Arsenal
+repa_re_drone_day_reduction,Drone Replicator day reduction,Int,1,,Flat days removed from research time while a Combat Drone Replicator is installed in the hub.,0,100,Private Arsenal
+repa_re_improve_blueprint_copies,Improve blueprint copies,Int,1,,Blueprint copies an improved hub also produces per item. Un-improved hubs produce no blueprint and only stock the Private Arsenal.,1,10,Private Arsenal
+,,,,,,,,
+repa_header_slots,Research slots Header,Header,Research slots,,,,,Private Arsenal
+repa_re_base_research_slots,Research slots per hub tier,Int,2,,Items researched in parallel per type equals this value times the hub tier divided by the item slot size. 2 gives 6 weapon slots at tier 3.,1,50,Private Arsenal
+repa_re_size_weapon,Slot size - weapon,Int,1,,Slots one weapon takes up. Higher means fewer weapons researched at once.,1,20,Private Arsenal
+repa_re_size_fighter,Slot size - fighter wing,Int,2,,Slots one fighter wing takes up. Higher means fewer fighters researched at once.,1,20,Private Arsenal
+repa_re_size_ship,Slot size - ship,Int,3,,Slots one ship takes up. Higher means fewer ships researched at once.,1,20,Private Arsenal
+,,,,,,,,
+repa_header_prices,Arsenal prices Header,Header,Arsenal prices,,,,,Private Arsenal
+repa_re_price_mult_no_core,Arsenal price x - no core,Double,2.0,,Arsenal price multiplier vs base item value with no AI core assigned.,0,20,Private Arsenal
+repa_re_price_mult_gamma,Arsenal price x - gamma core,Double,1.6,,Arsenal price multiplier vs base item value with a gamma core assigned.,0,20,Private Arsenal
+repa_re_price_mult_beta,Arsenal price x - beta core,Double,1.0,,Arsenal price multiplier vs base item value with a beta core assigned.,0,20,Private Arsenal
+repa_re_price_mult_alpha,Arsenal price x - alpha core,Double,0.4,,Arsenal price multiplier vs base item value with an alpha core assigned.,0,20,Private Arsenal
+repa_re_price_mult_omega,Arsenal price x - omega core,Double,0.0,,Arsenal price multiplier vs base item value with an omega core assigned (0 = free).,0,20,Private Arsenal
+,,,,,,,,
+repa_header_other,Other Header,Header,Other,,,,,Private Arsenal
+repa_re_sell_ships_in_fleet,Sell reverse-engineered ships in fleet screen (Tier 3),Boolean,false,,"When on, a Tier 3 hub's Private Arsenal stocks reverse-engineered ships and lets you buy them directly in the fleet screen, skipping the need for Heavy Industry. Off by default.",,,Private Arsenal
+repa_re_debug_logging,Debug logging,Boolean,false,,Write verbose reverse-engineering logs to starsector.log.,,,Private Arsenal
+,,,,,,,,
+sss_header_icons,Icons Header,Header,Stacked icons,,,,,StopStackingMe
+sss_icons_text,Icons Text,Text,"When you hold more than one of something, the game normally draws its sprite once per unit, piled up behind the first one. These toggles make it draw a single sprite instead. The quantity number in the corner is untouched, so you can still see how many you have. Changes apply the next time a screen draws - no restart needed.",,,,,StopStackingMe
+sss_flatten_weapons,Weapons - one sprite only,Boolean,true,,"Applies to weapons everywhere they are shown as a stack: the cargo screen, trading, storage, loot, and the weapon picker in refit.",,,StopStackingMe
+sss_flatten_personnel,Crew and marines - one sprite only,Boolean,false,,"Crew and marine stacks pile up the same way, one extra portrait for every 50 aboard. Turn this on to flatten those too.",,,StopStackingMe
+,,,,,,,,
+ir_header_popups,Popups Header,Header,Popups,,,,,Intel Renewed
+ir_mute_popups,Silence popups of hidden entries,Boolean,true,,"When on, an entry you have hidden (its kind, its category, or the entry itself) no longer shows the message popup in the bottom-left corner. Turn this off to keep the popups while the entries stay hidden on the intel screen.",,,Intel Renewed
+ir_right_click_hiding,Right-click hiding in the list,Boolean,true,,"With this on, [Shift + right-click] on a row in the intel list hides that one entry, and [Ctrl + right-click] hides every entry of the same kind. Turn it off if it clashes with another mod.",,,Intel Renewed
+,,,,,,,,
+ir_header_appearance,Appearance Header,Header,Customize window,,,,,Intel Renewed
+ir_border_color,Outline colour,Color,#80ccff,,Colour of the outline drawn around the Customize window and the search strip on the intel screen.,,,Intel Renewed
+ir_panel_opacity,Background opacity,Double,0.92,,"How solid the Customize window's black background is. [0] is fully transparent, [1] is fully opaque.",0,1,Intel Renewed
+,,,,,,,,
+ir_header_prefs,Preferences Header,Header,Saved preferences,,,,,Intel Renewed
+ir_prefs_text,Preferences Text,Text,"Hidden kinds and hidden categories are stored once per installation, in [saves/common/intel_renewed/], so they carry over to every playthrough. Single entries you hide are stored in that save only. Nothing is ever deleted from the game: hidden entries are only kept off the screen and can be brought back from the Customize window on the intel screen.",,,,,Intel Renewed
+ir_wipe_prefs,Wipe saved preferences,Boolean,false,,"Turn this on and press [Apply] to erase every hidden kind and category and start from an empty slate. Entries hidden per save are not affected. This cannot be undone. The toggle resets itself to off once the wipe has run, so it will read as off again the next time you open this menu.",,,Intel Renewed
+,,,,,,,,
+hmr_header_defaults,Defaults Header,Header,Default filter state,,,,,Hullmods - Renewed
+hmr_defaults_text,Defaults Text,Text,"These decide what the filter panel's toggles start at, and what [Reset filters] puts them back to. Changing one here applies it to the open picker right away; your other filters are left alone.",,,,,Hullmods - Renewed
+hmr_default_applicable_only,Applicable only - on by default,Boolean,true,,Hides hull-mods that can never go on the ship being refitted (a carrier mod on a hull with no bays). Turn this off if you would rather always see the full list.,,,Hullmods - Renewed
+hmr_default_favourites_only,Favourites only - on by default,Boolean,false,,Starts the picker showing only the hull-mods you have favourited. Holding [`] (backtick) does this momentarily regardless of the setting.,,,Hullmods - Renewed
+hmr_default_show_blacklisted,Show hidden - on by default,Boolean,false,,Starts the picker with hidden (blacklisted) hull-mods revealed instead of filtered out. Holding [Alt] does this momentarily regardless of the setting.,,,Hullmods - Renewed
+hmr_default_search_descriptions,Also search descriptions - on by default,Boolean,false,,"Widens the search box to match each hull-mod's description text, not just its name and design type.",,,Hullmods - Renewed
+,,,,,,,,
+hmr_header_appearance,Appearance Header,Header,Filter panel,,,,,Hullmods - Renewed
+hmr_border_color,Outline colour,Color,#80ccff,,Colour of the outline drawn around the filter panel and the [Name groups] window. The default matches the panel's original light blue.,,,Hullmods - Renewed
+hmr_panel_opacity,Background opacity,Double,0.55,,"How solid the filter panel's black background is. [0] is fully transparent, [1] is fully opaque.",0,1,Hullmods - Renewed
+,,,,,,,,
+hmr_header_prefs,Preferences Header,Header,Saved preferences,,,,,Hullmods - Renewed
+hmr_prefs_text,Preferences Text,Text,"Your favourites, hidden hull-mods, custom-group membership and group names are stored once per installation, in [saves/common/hullmods_renewed/], so they carry over to every playthrough. Marks for hull-mods you have not learned yet - or that belong to a mod you have disabled - are kept as-is and start working again as soon as those mods show up.",,,,,Hullmods - Renewed
+hmr_wipe_prefs,Wipe saved preferences,Boolean,false,,"Turn this on and press [Apply] to erase everything above - all favourites, hidden hull-mods, custom groups and group names - and start from an empty slate. This cannot be undone. The toggle resets itself to off once the wipe has run, so it will read as off again the next time you open this menu.",,,Hullmods - Renewed
+,,,,,,,,
+gd_header_crates,Crate contents,Header,Crate contents,,,,,Gambling Den
+gd_hullmod_box_percent,Hullmod box payout percentage,Int,50,,Percent of the base box counts below. Rounds down with at least one blueprint. Applies to previously saved box counts.,1,100,Gambling Den
+gd_count_box_small,Base blueprints - small box,Int,3,,Base count before the hullmod box payout percentage.,1,100,Gambling Den
+gd_count_box_medium,Base blueprints - medium box,Int,6,,Base count before the hullmod box payout percentage.,1,100,Gambling Den
+gd_count_box_large,Base blueprints - large box,Int,10,,Base count before the hullmod box payout percentage.,1,100,Gambling Den
+gd_count_weapons_small,Weapon crate - small,Int,2,,How many weapons a small crate holds.,1,100,Gambling Den
+gd_count_weapons_medium,Weapon crate - medium,Int,5,,How many weapons a medium crate holds.,1,100,Gambling Den
+gd_count_weapons_large,Weapon crate - large,Int,12,,How many weapons a large crate holds.,1,100,Gambling Den
+gd_count_fighters_small,Fighter crate - small,Int,1,,Fighter LPCs in a small crate.,1,100,Gambling Den
+gd_count_fighters_medium,Fighter crate - medium,Int,2,,Fighter LPCs in a medium crate.,1,100,Gambling Den
+gd_count_fighters_large,Fighter crate - large,Int,4,,Fighter LPCs in a large crate.,1,100,Gambling Den
+gd_header_cash,Cash and tokens,Header,Cash and tokens,,,,,Gambling Den
+gd_credit_percent,Credit payout percentage,Int,25,,Percent of the base credit values below. Also applies to cash for unavailable hullmods.,0,100,Gambling Den
+gd_credits_low,Base credits at low stakes,Int,8000,,Base amount before the credit payout percentage and random variance.,100,2000000,Gambling Den
+gd_credits_mid,Base credits at mid stakes,Int,25000,,Base amount before the credit payout percentage and random variance.,100,2000000,Gambling Den
+gd_credits_high,Base credits at high stakes,Int,60000,,Base amount before the credit payout percentage and random variance.,100,2000000,Gambling Den
+gd_credits_max,Base credits at max stakes,Int,120000,,Base amount before the credit payout percentage and random variance.,100,2000000,Gambling Den
+gd_tokens_low,Tokens at low stakes,Int,8,,Tokens the token symbol pays at low stakes.,1,1000,Gambling Den
+gd_tokens_mid,Tokens at mid stakes,Int,20,,Tokens the token symbol pays at mid stakes.,1,1000,Gambling Den
+gd_tokens_high,Tokens at high stakes,Int,45,,Tokens the token symbol pays at high stakes.,1,1000,Gambling Den
+gd_tokens_max,Tokens at max stakes,Int,90,,Tokens the token symbol pays at max stakes.,1,1000,Gambling Den
+gd_header_odds,Odds,Header,Slots odds,,,,,Gambling Den
+gd_hit_low,Chance a reel pays - low stakes,Int,16,,"Percent chance that one reel lands on something rather than busting. Each reel is rolled on its own, so five reels get five of these.",1,100,Gambling Den
+gd_hit_mid,Chance a reel pays - mid stakes,Int,20,,Percent chance that one reel lands on something rather than busting.,1,100,Gambling Den
+gd_hit_high,Chance a reel pays - high stakes,Int,26,,Percent chance that one reel lands on something rather than busting.,1,100,Gambling Den
+gd_hit_max,Chance a reel pays - max stakes,Int,32,,Percent chance that one reel lands on something rather than busting.,1,100,Gambling Den
+gd_header_tokens,Buying tokens,Header,Buying tokens,,,,,Gambling Den
+gd_ship_tokens_per_fp,Tokens per fleet point,Double,1.5,,"What the croupier pays for a ship, per fleet point. At 1.5 a Kite is about 5 tokens, a Hammerhead 15 and an Onslaught 45. Each d-mod knocks 10 percent off.",0.1,20,Gambling Den
+gd_pachinko_header_cost,Ball prices,Header,Pachinko ball prices,,,,,Gambling Den
+gd_pachinko_cost_hullmods,Hullmod ball price,Int,4,,Tokens paid for one ball on the hullmod board.,1,1000,Gambling Den
+gd_pachinko_cost_weapons,Weapon ball price,Int,2,,Tokens paid for one ball on the weapon board.,1,1000,Gambling Den
+gd_pachinko_token_price,Token ball price,Int,1,,Tokens paid for one ball on the token board.,1,1000,Gambling Den
+gd_pachinko_anime_mode,Anime mode,Boolean,false,,Show an anime background. Reopen Pachinko to apply.,,,Gambling Den
+gd_pachinko_credit_price,Credit ball price,Int,5,,Tokens paid for one ball on the credit board.,1,1000,Gambling Den
+gd_pachinko_header_tokens,Token pockets,Header,Pachinko token pockets,,,,,Gambling Den
+gd_pachinko_risky_token_pocket_0,Tokens - centre pocket,Int,0,,Tokens paid by the centre pocket.,0,1000,Gambling Den
+gd_pachinko_risky_token_pocket_1,Tokens - one from centre,Int,0,,Tokens paid one pocket from the centre.,0,1000,Gambling Den
+gd_pachinko_risky_token_pocket_2,Tokens - two from centre,Int,0,,Tokens paid two pockets from the centre.,0,1000,Gambling Den
+gd_pachinko_risky_token_pocket_3,Tokens - three from centre,Int,0,,Tokens paid three pockets from the centre.,0,1000,Gambling Den
+gd_pachinko_risky_token_pocket_4,Tokens - four from centre,Int,8,,Tokens paid four pockets from the centre.,0,1000,Gambling Den
+gd_pachinko_risky_token_pocket_5,Tokens - outer pockets,Int,60,,Tokens paid at either edge.,0,1000,Gambling Den
+gd_pachinko_header_credits,Credit pockets,Header,Pachinko credit pockets,,,,,Gambling Den
+gd_pachinko_credit_pocket_0,Credits - centre pocket,Int,0,,Credits paid by the centre pocket.,0,2000000,Gambling Den
+gd_pachinko_credit_pocket_1,Credits - one from centre,Int,500,,Credits paid one pocket from the centre.,0,2000000,Gambling Den
+gd_pachinko_credit_pocket_2,Credits - two from centre,Int,2500,,Credits paid two pockets from the centre.,0,2000000,Gambling Den
+gd_pachinko_credit_pocket_3,Credits - three from centre,Int,10000,,Credits paid three pockets from the centre.,0,2000000,Gambling Den
+gd_pachinko_credit_pocket_4,Credits - four from centre,Int,50000,,Credits paid four pockets from the centre.,0,2000000,Gambling Den
+gd_pachinko_credit_pocket_5,Credits - outer pockets,Int,200000,,Credits paid at either edge.,0,2000000,Gambling Den
+gd_pachinko_header_pockets,Weapon pockets,Header,Pachinko weapon pockets,,,,,Gambling Den
+gd_pachinko_pocket_0,Weapons - centre pocket,Int,0,,Weapons paid by the centre pocket.,0,100,Gambling Den
+gd_pachinko_pocket_1,Weapons - one from centre,Int,1,,Weapons paid one pocket from the centre.,0,100,Gambling Den
+gd_pachinko_pocket_2,Weapons - two from centre,Int,2,,Weapons paid two pockets from the centre.,0,100,Gambling Den
+gd_pachinko_pocket_3,Weapons - three from centre,Int,4,,Weapons paid three pockets from the centre.,0,100,Gambling Den
+gd_pachinko_pocket_4,Weapons - four from centre,Int,8,,Weapons paid four pockets from the centre.,0,100,Gambling Den
+gd_pachinko_pocket_5,Weapons - outer pockets,Int,16,,Weapons paid at either edge.,0,100,Gambling Den
+gd_pachinko_header_hullmods,Hullmod pockets,Header,Pachinko hullmod pockets,,,,,Gambling Den
+gd_pachinko_hullmod_pocket_0,Hullmods - centre pocket,Int,0,,Blueprints paid by the centre pocket.,0,100,Gambling Den
+gd_pachinko_hullmod_pocket_1,Hullmods - one from centre,Int,0,,Blueprints paid one pocket from the centre.,0,100,Gambling Den
+gd_pachinko_hullmod_pocket_2,Hullmods - two from centre,Int,0,,Blueprints paid two pockets from the centre.,0,100,Gambling Den
+gd_pachinko_hullmod_pocket_3,Hullmods - three from centre,Int,1,,Blueprints paid three pockets from the centre.,0,100,Gambling Den
+gd_pachinko_hullmod_pocket_4,Hullmods - four from centre,Int,1,,Blueprints paid four pockets from the centre.,0,100,Gambling Den
+gd_pachinko_hullmod_pocket_5,Hullmods - outer pockets,Int,1,,Blueprints paid at either edge of the board.,0,100,Gambling Den
+gd_jackpot_header,Match rates,Header,Relic Jackpot match rates,,,,,Gambling Den
+gd_jackpot_match_2,Match chance - 2 tokens per reel,Int,15,,Percent of pulls that award one item from the 2-token tier.,0,100,Gambling Den
+gd_jackpot_match_4,Match chance - 4 tokens per reel,Int,20,,Percent of pulls that award one item from the 4-token tier.,0,100,Gambling Den
+gd_jackpot_match_8,Match chance - 8 tokens per reel,Int,25,,Percent of pulls that award one item from the 8-token tier.,0,100,Gambling Den
+gd_pinball_header,Pinball,Header,Pinball,,,,,Gambling Den
+gd_pinball_price,Three-ball entry price,Int,10,,Tokens paid for a three-ball pinball round.,1,1000,Gambling Den
+gd_pinball_score_0,Score threshold 1,Int,2000,,Score needed for reward tier 1. Thresholds remain increasing.,1,1000000,Gambling Den
+gd_pinball_score_1,Score threshold 2,Int,6000,,Score needed for reward tier 2. Thresholds remain increasing.,1,1000000,Gambling Den
+gd_pinball_score_2,Score threshold 3,Int,12000,,Score needed for reward tier 3. Thresholds remain increasing.,1,1000000,Gambling Den
+gd_pinball_score_3,Score threshold 4,Int,24000,,Score needed for reward tier 4. Thresholds remain increasing.,1,1000000,Gambling Den
+gd_pinball_hullmods_0,Hullmods - tier 1,Int,1,,Direct hullmods paid for reward tier 1. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_hullmods_1,Hullmods - tier 2,Int,2,,Direct hullmods paid for reward tier 2. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_hullmods_2,Hullmods - tier 3,Int,4,,Direct hullmods paid for reward tier 3. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_hullmods_3,Hullmods - tier 4,Int,8,,Direct hullmods paid for reward tier 4. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_weapons_0,Weapons - tier 1,Int,2,,Direct weapons paid for reward tier 1. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_weapons_1,Weapons - tier 2,Int,5,,Direct weapons paid for reward tier 2. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_weapons_2,Weapons - tier 3,Int,12,,Direct weapons paid for reward tier 3. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_weapons_3,Weapons - tier 4,Int,25,,Direct weapons paid for reward tier 4. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_fighters_0,Fighters - tier 1,Int,1,,Direct fighters paid for reward tier 1. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_fighters_1,Fighters - tier 2,Int,2,,Direct fighters paid for reward tier 2. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_fighters_2,Fighters - tier 3,Int,4,,Direct fighters paid for reward tier 3. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_fighters_3,Fighters - tier 4,Int,8,,Direct fighters paid for reward tier 4. Not affected by Slots crate settings.,0,100,Gambling Den
+gd_pinball_credits_0,Credits - tier 1,Int,10000,,Direct credits paid for reward tier 1. Not affected by Slots crate settings.,0,2000000,Gambling Den
+gd_pinball_credits_1,Credits - tier 2,Int,30000,,Direct credits paid for reward tier 2. Not affected by Slots crate settings.,0,2000000,Gambling Den
+gd_pinball_credits_2,Credits - tier 3,Int,75000,,Direct credits paid for reward tier 3. Not affected by Slots crate settings.,0,2000000,Gambling Den
+gd_pinball_credits_3,Credits - tier 4,Int,200000,,Direct credits paid for reward tier 4. Not affected by Slots crate settings.,0,2000000,Gambling Den
+gd_pinball_tokens_0,Tokens - tier 1,Int,5,,Direct tokens paid for reward tier 1. Not affected by Slots crate settings.,0,1000000,Gambling Den
+gd_pinball_tokens_1,Tokens - tier 2,Int,15,,Direct tokens paid for reward tier 2. Not affected by Slots crate settings.,0,1000000,Gambling Den
+gd_pinball_tokens_2,Tokens - tier 3,Int,35,,Direct tokens paid for reward tier 3. Not affected by Slots crate settings.,0,1000000,Gambling Den
+gd_pinball_tokens_3,Tokens - tier 4,Int,80,,Direct tokens paid for reward tier 4. Not affected by Slots crate settings.,0,1000000,Gambling Den

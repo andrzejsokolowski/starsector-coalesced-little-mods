@@ -1,0 +1,73 @@
+{
+	# Most of what you will want to move - crate sizes, cash and token payouts, and the odds -
+	# is on the LunaLib settings page for this mod, where it can be changed with a slider while
+	# the game is running. What is left here is the deeper wiring.
+
+	# ------------------------------------------------------------------ tokens
+	# Tokens are the only currency in the den, and hulls are the only way to buy them.
+	# A hull is priced on how much ship it is (fleet points), not what it would fetch at a
+	# market, so a pile of salvaged frigates is still worth trading. Overridden by the slider.
+	"shipTokensPerFleetPoint": 1.5,
+	# Each d-mod knocks this fraction off the price. Never drops below 20% of full.
+	"shipTokenPenaltyPerDMod": 0.1,
+
+	# ------------------------------------------------------------------ machine
+	"reelsDefault": 3,
+	"reelsMax": 5,
+	# Slots: cost per reel at low / mid / high / max stakes. Other games can use their own rules.
+	"stakeCost": [1, 2, 4, 8],
+
+	# ------------------------------------------------------------------- odds
+	# The chance one reel lands on anything at all. Everything else is a bust, and a bust is
+	# meant to be the ordinary outcome. Overridden by the sliders.
+	"hitChance": [0.16, 0.20, 0.26, 0.32],
+
+	# Relative prize weights once a reel wins. Higher stakes also unlock bigger crates.
+	"weightsLow": {
+		"tokens": 34, "credits": 24,
+		"weapons_small": 20, "weapons_medium": 4, "weapons_large": 0,
+		"fighters_small": 4, "fighters_medium": 2, "fighters_large": 0,
+		"box_small": 12, "box_medium": 0, "box_large": 0
+	},
+	"weightsMid": {
+		"tokens": 30, "credits": 18,
+		"weapons_small": 10, "weapons_medium": 10, "weapons_large": 0,
+		"fighters_small": 4, "fighters_medium": 2, "fighters_large": 2,
+		"box_small": 15, "box_medium": 9, "box_large": 0
+	},
+	"weightsHigh": {
+		"tokens": 26, "credits": 14,
+		"weapons_small": 2, "weapons_medium": 12, "weapons_large": 6,
+		"fighters_small": 4, "fighters_medium": 2, "fighters_large": 2,
+		"box_small": 11, "box_medium": 14, "box_large": 7
+	},
+	"weightsMax": {
+		"tokens": 22, "credits": 10,
+		"weapons_small": 0, "weapons_medium": 10, "weapons_large": 10,
+		"fighters_small": 4, "fighters_medium": 2, "fighters_large": 2,
+		"story_point": 0.5,
+		"box_small": 10, "box_medium": 16, "box_large": 14
+	},
+
+	# ------------------------------------------------------------------ prizes
+	# Base counts before the hullmod box percentage (50% by default).
+	# Weapon and fighter crates are not scaled by that percentage.
+	"crateContents": {
+		"box_small": 3, "box_medium": 6, "box_large": 10,
+		"weapons_small": 2, "weapons_medium": 5, "weapons_large": 12,
+		"fighters_small": 1, "fighters_medium": 2, "fighters_large": 4
+	},
+	# Base values before the LunaLib credit percentage (25% by default).
+	"creditsPaid": [8000, 25000, 60000, 120000],
+	"tokensPaid": [8, 20, 45, 90],
+
+	# Cash and token payouts vary by up to this fraction either way.
+	"amountVariance": 0.25,
+
+	# If the machine has run out of hull mods you do not already know, a box pays this many
+	# credits per blueprint it could not find instead.
+	"creditsPerBlueprintOwed": 20000,
+
+	# The chance the machine doubles a winning pull instead of keeping the lot.
+	"doubleOrNothingWinChance": 0.45
+}

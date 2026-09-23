@@ -1,0 +1,616 @@
+package starterpack.catalog
+
+import com.fs.starfarer.api.Global
+import com.fs.starfarer.api.ModSpecAPI
+import com.fs.starfarer.api.campaign.SpecialItemSpecAPI
+import com.fs.starfarer.api.combat.ShipAPI
+import com.fs.starfarer.api.combat.ShipHullSpecAPI
+import com.fs.starfarer.api.combat.ShipVariantAPI
+import com.fs.starfarer.api.combat.WeaponAPI
+import com.fs.starfarer.api.impl.campaign.ids.Tags
+import com.fs.starfarer.api.impl.campaign.skills.FluxRegulation
+import com.fs.starfarer.api.loading.Description
+import com.fs.starfarer.api.loading.FighterWingSpecAPI
+import com.fs.starfarer.api.loading.HullModSpecAPI
+import com.fs.starfarer.api.loading.WeaponSlotAPI
+import com.fs.starfarer.api.loading.WeaponSpecAPI
+import com.fs.starfarer.api.plugins.impl.CoreAutofitPlugin
+
+/**
+ * One pickable thing, flattened for the list UI.
+ *
+ * Everything the picker needs is resolved once, at index time, so filtering a 3,000-entry list on
+ * each keystroke is field reads and one substring test rather than thousands of spec lookups.
+ */
+class CatalogEntry(
+    val id: String,
+    val name: String,
+    /** Coarse grouping shown in the picker's second column -- hull size, weapon size, item type. */
+    val primary: String,
+    /** Finer detail shown in the third column -- designation, weapon type, tier. */
+    val secondary: String,
+    val sourceMod: String,
+    val sprite: String = "",
+    /** Ordnance point cost where the concept applies (weapons, wings, hullmods), else 0. */
+    val opCost: Float = 0f,
+    /**
+     * The game's own description text, shown in the picker's hover tooltip. Blank when the content
+     * type has none. Resolved at index time so hovering never has to go back to the spec.
+     */
+    val description: String = "",
+) {
+    val searchBlob: String = "$name $id $primary $secondary $sourceMod".lowercase()
+
+    /** Matches a whitespace-separated query: every term must appear somewhere in the blob. */
+    fun matches(terms: List<String>): Boolean = terms.all { searchBlob.contains(it) }
+}
+
+/** The picker categories. Each maps to one lazily-built list in [Catalog]. */
+enum class CatalogKind {
+    HULL,
+    WEAPON,
+    FIGHTER,
+    HULLMOD,
+    DMOD,
+    COMMODITY,
+    SPECIAL_ITEM,
+    ABILITY,
+}
+
+/**
+ * The catalogue of everything the current mod list defines, in the shape the editor's pickers want.
+ *
+ * Built lazily per kind and cached for the process. Specs do not change after load, and the editor
+ * runs at the main menu where nothing else is competing for time, so there is no invalidation story
+ * beyond [invalidate] for completeness.
+ *
+ * Everything here is read-only spec inspection. Nothing in this file touches a sector, which is what
+ * lets the whole editor run from the title screen.
+ */
+object Catalog {
+
+    private const val VANILLA = "Vanilla"
+    private const val UNSPECIFIED = "-"
+
+    private val cache = HashMap<CatalogKind, List<CatalogEntry>>()
+    private val byId = HashMap<CatalogKind, Map<String, CatalogEntry>>()
+    private var moduleHullCache: Set<String>? = null
+
+    fun entries(kind: CatalogKind): List<CatalogEntry> = cache.getOrPut(kind) {
+        val started = System.nanoTime()
+        val built = when (kind) {
+            CatalogKind.HULL -> buildHulls()
+            CatalogKind.WEAPON -> buildWeapons()
+            CatalogKind.FIGHTER -> buildFighters()
+            CatalogKind.HULLMOD -> buildHullMods(dMods = false)
+            CatalogKind.DMOD -> buildHullMods(dMods = true)
+            CatalogKind.COMMODITY -> buildCommodities()
+            CatalogKind.SPECIAL_ITEM -> buildSpecialItems()
+            CatalogKind.ABILITY -> buildAbilities()
+        }
+        Global.getLogger(Catalog::class.java).info(
+            "StarterPack: indexed ${built.size} $kind entries in ${(System.nanoTime() - started) / 1_000_000} ms"
+        )
+        built
+    }
+
+    fun lookup(kind: CatalogKind, id: String): CatalogEntry? =
+        byId.getOrPut(kind) { entries(kind).associateBy { it.id } }[id]
+
+    /** The display name for an id, falling back to the raw id so unknown ids stay visible, not blank. */
+    fun nameOf(kind: CatalogKind, id: String): String = lookup(kind, id)?.name ?: id
+
+    fun invalidate() {
+        cache.clear()
+        byId.clear()
+        moduleHullCache = null
+    }
+
+    // --- Builders ------------------------------------------------------------------------------
+
+    /**
+     * Ownable hulls only.
+     *
+     * Auto-generated `(D)` hulls are excluded because they are not independently pickable: D-mods on
+     * a template swap the hull to its D variant at apply time, exactly as combat damage does, so
+     * offering `onslaught_D` alongside `onslaught` would be two paths to one outcome and the first
+     * would silently ignore whatever D-mods you chose. Stations, modules and fighter hulls are
+     * excluded because they cannot be a fleet member -- see [isOwnableHull].
+     */
+    private fun buildHulls(): List<CatalogEntry> {
+        val out = ArrayList<CatalogEntry>()
+        for (spec in Global.getSettings().allShipHullSpecs.orEmpty()) {
+            if (spec == null) continue
+            if (spec.safeBool { isDefaultDHull }) continue
+            if (!isOwnableHull(spec)) continue
+            out += CatalogEntry(
+                id = spec.hullId,
+                name = spec.hullName.orEmpty().ifBlank { spec.hullId },
+                primary = sizeLabel(spec.hullSize),
+                secondary = spec.designation.clean(),
+                sourceMod = modName(spec.safeGet { sourceMod }),
+                sprite = spec.spriteName.orEmpty(),
+                opCost = spec.safeFloat { getOrdnancePoints(null).toFloat() },
+                description = describe(spec.hullId, Description.Type.SHIP),
+            )
+        }
+        return out.sortedBy { it.name.lowercase() }
+    }
+
+    /**
+     * Weapons you could actually mount.
+     *
+     * Built-in, decorative, system and launch-bay "weapons" are filtered out: they are hull furniture
+     * the engine mounts itself, and putting one in a normal slot produces a ship that either looks
+     * broken or refuses to build.
+     */
+    private fun buildWeapons(): List<CatalogEntry> {
+        val out = ArrayList<CatalogEntry>()
+        for (spec in Global.getSettings().allWeaponSpecs.orEmpty()) {
+            if (spec == null) continue
+            if (spec.type in NON_MOUNTABLE_WEAPON_TYPES) continue
+            out += CatalogEntry(
+                id = spec.weaponId,
+                name = spec.weaponName.orEmpty().ifBlank { spec.weaponId },
+                primary = spec.size?.displayName ?: UNSPECIFIED,
+                secondary = spec.type?.displayName ?: UNSPECIFIED,
+                sourceMod = modName(spec.safeGet { sourceMod }),
+                // Turret art is the recognisable view; hardpoint-only weapons fall back to theirs.
+                sprite = spec.turretSpriteName.orEmpty().ifBlank { spec.hardpointSpriteName.orEmpty() },
+                opCost = spec.safeFloat { getOrdnancePointCost(null) },
+                description = describe(spec.weaponId, Description.Type.WEAPON),
+            )
+        }
+        return out.sortedBy { it.name.lowercase() }
+    }
+
+    private fun buildFighters(): List<CatalogEntry> {
+        val out = ArrayList<CatalogEntry>()
+        for (spec in Global.getSettings().allFighterWingSpecs.orEmpty()) {
+            if (spec == null) continue
+            out += CatalogEntry(
+                id = spec.id,
+                name = spec.wingName.orEmpty().ifBlank { spec.id },
+                primary = roleLabel(spec),
+                secondary = "Tier ${spec.tier}",
+                sourceMod = modName(spec.safeGet { sourceMod }),
+                // A wing has no art of its own; its single fighter's hull carries the sprite.
+                sprite = spec.safeGet { variant?.hullSpec?.spriteName }.orEmpty(),
+                opCost = spec.safeFloat { getOpCost(null) },
+                // A wing has no description of its own; the fighter hull it launches carries one.
+                description = spec.safeGet { variant?.hullSpec?.hullId }
+                    ?.let { describe(it, Description.Type.SHIP) }.orEmpty(),
+            )
+        }
+        return out.sortedBy { it.name.lowercase() }
+    }
+
+    /**
+     * Hullmods, split into the two lists the editor treats separately.
+     *
+     * D-mods are their own picker because they are not a subset of "hullmods you might want" -- they
+     * are damage, they go on through a different code path at apply time, and mixing them into the
+     * regular list would mean scrolling past forty ways to make your ship worse.
+     *
+     * Hidden mods are dropped: `isHiddenEverywhere` marks scaffolding the game installs itself
+     * (module tracking, story-mission markers), and putting one on a ship by hand ranges from inert
+     * to save-breaking.
+     */
+    private fun buildHullMods(dMods: Boolean): List<CatalogEntry> {
+        val out = ArrayList<CatalogEntry>()
+        for (spec in Global.getSettings().allHullModSpecs.orEmpty()) {
+            if (spec == null) continue
+            if (spec.safeBool { isHiddenEverywhere }) continue
+            if (spec.safeBool { hasTag(Tags.HULLMOD_DMOD) } != dMods) continue
+            out += CatalogEntry(
+                id = spec.id,
+                name = spec.displayName.orEmpty().ifBlank { spec.id },
+                primary = if (dMods) "D-mod" else "Tier ${spec.tier}",
+                secondary = if (canBuildIn(spec)) "S-moddable" else "Cannot be built in",
+                sourceMod = modName(spec.safeGet { sourceMod }),
+                sprite = spec.spriteName.orEmpty(),
+                // Cost is per hull size; the editor recomputes it against the actual hull.
+                opCost = spec.safeFloat { getCostFor(ShipAPI.HullSize.CRUISER).toFloat() },
+                // Hullmod descriptions are also per hull size, and the catalogue is shared across
+                // every ship, so this quotes the cruiser text -- the size only ever changes numbers
+                // inside the wording, never what the mod does.
+                description = spec.safeGet { getDescription(ShipAPI.HullSize.CRUISER) }.clean(blankIfMissing = true),
+            )
+        }
+        return out.sortedBy { it.name.lowercase() }
+    }
+
+    /** Whether a hullmod can be made permanent with a story point (and so appear in the S-mod list). */
+    fun canBuildIn(spec: HullModSpecAPI): Boolean =
+        !spec.safeBool { hasTag(Tags.HULLMOD_NO_BUILD_IN) } && !spec.safeBool { hasTag(Tags.HULLMOD_DMOD) }
+
+    /**
+     * Commodities you can hold.
+     *
+     * Meta commodities (`ships`, `blueprints`, `credits`) are accounting rows the economy uses to talk
+     * to itself, not cargo -- adding one to the hold produces a stack the game cannot render or price.
+     */
+    private fun buildCommodities(): List<CatalogEntry> {
+        val out = ArrayList<CatalogEntry>()
+        for (spec in Global.getSettings().allCommoditySpecs.orEmpty()) {
+            if (spec == null) continue
+            if (spec.safeBool { isMeta }) continue
+            out += CatalogEntry(
+                id = spec.id,
+                name = spec.name.orEmpty().ifBlank { spec.id },
+                primary = if (spec.safeBool { isNonEcon }) "Non-economic" else "Standard",
+                secondary = spec.demandClass.clean(),
+                sourceMod = modName(spec.safeGet { sourceMod }),
+                sprite = spec.iconName.orEmpty(),
+            )
+        }
+        return out.sortedBy { it.name.lowercase() }
+    }
+
+    /**
+     * Special items.
+     *
+     * Mission items are dropped rather than merely sorted low: scripted missions hand those over
+     * directly and check for them by identity, so starting with one can only break the quest that
+     * needs it.
+     */
+    private fun buildSpecialItems(): List<CatalogEntry> {
+        val out = ArrayList<CatalogEntry>()
+        for (spec in Global.getSettings().allSpecialItemSpecs.orEmpty()) {
+            if (spec == null) continue
+            if (spec.safeBool { hasTag(Tags.MISSION_ITEM) }) continue
+            out += CatalogEntry(
+                id = spec.id,
+                name = spec.name.orEmpty().ifBlank { spec.id },
+                primary = itemType(spec),
+                secondary = spec.manufacturer.clean(),
+                sourceMod = modName(spec.safeGet { sourceMod }),
+                sprite = spec.iconName.orEmpty(),
+            )
+        }
+        return out.sortedBy { it.name.lowercase() }
+    }
+
+    /**
+     * Campaign abilities, read straight from the merged `abilities.csv`.
+     *
+     * There is no `getAllAbilitySpecs()` on [com.fs.starfarer.api.SettingsAPI], so the spreadsheet is
+     * the only complete list -- and reading it merged means modded abilities show up without us
+     * knowing anything about the mods that added them. Rows with a blank id are the comment lines
+     * vanilla uses as section headers.
+     */
+    private fun buildAbilities(): List<CatalogEntry> {
+        val out = ArrayList<CatalogEntry>()
+        runCatching {
+            val rows = Global.getSettings().getMergedSpreadsheetData("id", "data/campaign/abilities.csv")
+            for (i in 0 until rows.length()) {
+                val row = rows.optJSONObject(i) ?: continue
+                val id = row.optString("id", "").trim()
+                if (id.isEmpty()) continue
+                val desc = row.optString("desc", "").trim()
+                out += CatalogEntry(
+                    id = id,
+                    name = row.optString("name", "").trim().ifBlank { id },
+                    primary = row.optString("type", "").trim().ifBlank { UNSPECIFIED },
+                    secondary = desc,
+                    sourceMod = VANILLA,          // the merged sheet does not carry a source column
+                    sprite = row.optString("icon", "").trim(),
+                    description = desc,
+                )
+            }
+        }.onFailure {
+            Global.getLogger(Catalog::class.java)
+                .error("StarterPack: could not read abilities.csv; the hotbar picker will be empty.", it)
+        }
+        return out.sortedBy { it.name.lowercase() }
+    }
+
+    // --- Hull introspection --------------------------------------------------------------------
+
+    /**
+     * The weapon slots a player can actually fit something into.
+     *
+     * Built-in slots already hold a fixed weapon and cannot be changed; decorative, system and
+     * station-module slots are not weapons at all. Returned in the hull's own declaration order,
+     * which is the order the refit screen shows and so the order the editor should.
+     */
+    fun fittableSlots(hullId: String): List<WeaponSlotAPI> {
+        val spec = hullSpec(hullId) ?: return emptyList()
+        return spec.allWeaponSlotsCopy.orEmpty().filterNotNull().filter { slot ->
+            slot.safeBool { isWeaponSlot } &&
+                !slot.safeBool { isBuiltIn } &&
+                !slot.safeBool { isDecorative } &&
+                !slot.safeBool { isSystemSlot } &&
+                !slot.safeBool { isStationModule } &&
+                !slot.safeBool { isHidden }
+        }
+    }
+
+    /**
+     * How many fighter bays the player can fill.
+     *
+     * Built-in wings occupy their bay permanently, so they are subtracted -- a Legion XIV has bays the
+     * refit screen will not let you touch, and offering them would produce a variant the game
+     * silently rewrites.
+     */
+    fun fittableBayCount(hullId: String): Int {
+        val spec = hullSpec(hullId) ?: return 0
+        val total = spec.safeInt { fighterBays }
+        val builtIn = spec.safeGet { builtInWings }?.size ?: 0
+        return (total - builtIn).coerceAtLeast(0)
+    }
+
+    fun hullSpec(hullId: String): ShipHullSpecAPI? =
+        if (hullId.isBlank()) null else runCatching { Global.getSettings().getHullSpec(hullId) }.getOrNull()
+
+    fun weaponSpec(weaponId: String): WeaponSpecAPI? =
+        if (weaponId.isBlank()) null else runCatching { Global.getSettings().getWeaponSpec(weaponId) }.getOrNull()
+
+    fun wingSpec(wingId: String): FighterWingSpecAPI? =
+        if (wingId.isBlank()) null else runCatching { Global.getSettings().getFighterWingSpec(wingId) }.getOrNull()
+
+    fun hullModSpec(modId: String): HullModSpecAPI? =
+        if (modId.isBlank()) null else runCatching { Global.getSettings().getHullModSpec(modId) }.getOrNull()
+
+    fun variantExists(variantId: String): Boolean =
+        variantId.isNotBlank() &&
+            runCatching { Global.getSettings().doesVariantExist(variantId) }.getOrDefault(false)
+
+    /** Resolves a variant id, or null if the current mod list does not define it. */
+    fun variant(variantId: String): ShipVariantAPI? =
+        if (!variantExists(variantId)) null
+        else runCatching { Global.getSettings().getVariant(variantId) }.getOrNull()
+
+    /**
+     * Weapons that fit a given slot, in catalogue order.
+     *
+     * Delegates the actual test to the engine's own `weaponFits`, which knows the size and mount-type
+     * rules including whatever a mod has changed about them. Filtering here rather than showing
+     * everything and rejecting on click is what makes the picker usable: a large ballistic hardpoint
+     * has maybe forty candidates out of eighteen hundred weapons.
+     */
+    fun weaponsFitting(slot: WeaponSlotAPI?): List<CatalogEntry> {
+        val all = entries(CatalogKind.WEAPON)
+        if (slot == null) return all
+        return all.filter { entry ->
+            val spec = weaponSpec(entry.id) ?: return@filter false
+            runCatching { slot.weaponFits(spec) }.getOrDefault(false)
+        }
+    }
+
+    /** Total ordnance points on a hull, before any skill bonuses (there is no character at the menu). */
+    fun baseOrdnancePoints(hullId: String): Int =
+        hullSpec(hullId)?.safeInt { getOrdnancePoints(null) } ?: 0
+
+    /** A hullmod's OP cost on a specific hull size -- costs are per size, so the hull matters. */
+    fun hullModCost(modId: String, size: ShipAPI.HullSize?): Int {
+        val spec = hullModSpec(modId) ?: return 0
+        return spec.safeInt { getCostFor(size ?: ShipAPI.HullSize.FRIGATE) }
+    }
+
+    // --- Station modules -------------------------------------------------------------------------
+
+    /**
+     * The station-module slot ids on a hull, in declaration order.
+     *
+     * A slot of this type does not hold a weapon, it holds a whole ship. Any hull with one is a
+     * multi-module ship -- vanilla's Onslaught Mk.I, every station, and a good number of modded
+     * capitals -- and its modules are most of what makes it that ship rather than a bare core hull.
+     */
+    fun moduleSlotIds(hullId: String): List<String> = moduleSlotIds(hullSpec(hullId))
+
+    fun moduleSlotIds(spec: ShipHullSpecAPI?): List<String> =
+        spec.safeGet { this?.allWeaponSlotsCopy }.orEmpty()
+            .filterNotNull()
+            .filter { it.safeBool { isStationModule } }
+            .mapNotNull { it.safeGet { id } }
+
+    /**
+     * The module layout the game's own content gives a hull: slot id -> module variant id.
+     *
+     * There is no such thing as "the hull's modules" to read directly -- modules live on the
+     * *variant*, and the hull only declares the slots they go in. So the layout is borrowed from a
+     * stock variant of the same hull, which is where the game gets it from when it spawns one.
+     *
+     * The codex's own pick comes first where a hull names one, then the ordinary stock variants, and
+     * the engine's auto-generated `_Hull` variant last. That one does carry the modules, but stripped
+     * of their weapons, so it is right only when there is nothing better to copy.
+     */
+    fun defaultModules(hullId: String): Map<String, String> {
+        val slots = moduleSlotIds(hullId)
+        if (slots.isEmpty()) return emptyMap()
+        for (variantId in moduleDonorIds(hullId)) {
+            val modules = modulesOf(variant(variantId)).filterKeys { it in slots }
+            if (modules.isNotEmpty()) return modules
+        }
+        return emptyMap()
+    }
+
+    /** The module map a variant carries, copied out and cleaned of blanks. */
+    fun modulesOf(variant: ShipVariantAPI?): Map<String, String> {
+        val source = variant.safeGet { this?.stationModules } ?: return emptyMap()
+        if (source.isEmpty()) return emptyMap()
+        val out = LinkedHashMap<String, String>()
+        runCatching {
+            for ((slotId, variantId) in source) {
+                if (slotId.isNullOrBlank() || variantId.isNullOrBlank()) continue
+                out[slotId] = variantId
+            }
+        }
+        return out
+    }
+
+    /**
+     * Hulls that exist only as somebody's module, and so are not ships you can pick.
+     *
+     * The `MODULE` hint is the intended marker and vanilla sets it on every one of them, but it is
+     * easy to leave out of a hull's data and a fair number of mods do -- which drops a ship's armour
+     * plates, weapon platforms and structural struts into the hull picker right next to the ship they
+     * belong to. So the list is worked out instead of trusted: every variant in the game is asked what
+     * it bolts into its module slots, and whatever comes back is a module.
+     *
+     * Built once, off spec data that cannot change after load, and only when the hull list is indexed.
+     *
+     * A hull with module slots of its own is kept even when something else carries it as a module: a
+     * ship that has modules is a ship first, and there are modded designs where one is both.
+     */
+    private val moduleHulls: Set<String>
+        get() = moduleHullCache ?: findModuleHulls().also { moduleHullCache = it }
+
+    private fun findModuleHulls(): Set<String> {
+        val started = System.nanoTime()
+        val found = HashSet<String>()
+        val variantIds = runCatching { Global.getSettings().allVariantIds }.getOrNull().orEmpty()
+        for (variantId in variantIds.filterNotNull()) {
+            for (moduleVariantId in modulesOf(variant(variantId)).values) {
+                val hullId = variant(moduleVariantId).safeGet { this?.hullSpec?.hullId }.orEmpty()
+                if (hullId.isNotEmpty()) found += hullId
+            }
+        }
+        val out = found.filterTo(HashSet()) { moduleSlotIds(it).isEmpty() }
+        Global.getLogger(Catalog::class.java).info(
+            "StarterPack: found ${out.size} module hulls across ${variantIds.size} variants in " +
+                "${(System.nanoTime() - started) / 1_000_000} ms; they are hidden from the hull picker"
+        )
+        return out
+    }
+
+    /** What a module is called: its hull's name, which is what the refit screen puts on the tab. */
+    fun moduleName(variantId: String?): String {
+        val id = variantId.orEmpty().trim()
+        if (id.isEmpty()) return ""
+        return variant(id).safeGet { this?.hullSpec?.hullName }.orEmpty().ifBlank { id }
+    }
+
+    private fun moduleDonorIds(hullId: String): List<String> {
+        val emptyHull = "$hullId$EMPTY_HULL_SUFFIX"
+        val stock = runCatching { Global.getSettings().hullIdToVariantListMap?.getList(hullId) }
+            .getOrNull().orEmpty().filterNotNull()
+        val codex = hullSpec(hullId).safeGet { this?.codexVariantId }.orEmpty().trim()
+
+        val out = LinkedHashSet<String>()
+        if (codex.isNotEmpty() && codex != emptyHull) out += codex
+        out += stock.filter { it != emptyHull }
+        out += emptyHull
+        return out.toList()
+    }
+
+    /** Suffix of the empty-hull variant the engine generates for every hull. */
+    private const val EMPTY_HULL_SUFFIX = "_Hull"
+
+    // --- Labels --------------------------------------------------------------------------------
+
+    /**
+     * Whether a hull is something the player could own and fly.
+     *
+     * `UNDER_PARENT` is deliberately **not** a disqualifier. It is a render-order hint -- "draw this
+     * beneath its parent" -- not a statement about ownership. In vanilla the only hull carrying it is
+     * a high-tech strut, which is also tagged `MODULE` and so is excluded anyway; but mods put it on
+     * real ships (UAF's `uaf_m_machi_apa`, a civilian troop transport), and treating it as a filter
+     * made those ships silently unpickable while their combat siblings showed up fine.
+     *
+     * Modules are excluded twice over: by their hint, and by [moduleHulls] for the mods that do not
+     * set it.
+     */
+    private fun isOwnableHull(spec: ShipHullSpecAPI): Boolean {
+        if (spec.hullSize == ShipAPI.HullSize.FIGHTER) return false
+        if (spec.safeGet { hullId }.orEmpty() in moduleHulls) return false
+        val hints = spec.hints ?: return true
+        if (hints.contains(ShipHullSpecAPI.ShipTypeHints.STATION)) return false
+        if (hints.contains(ShipHullSpecAPI.ShipTypeHints.MODULE)) return false
+        return true
+    }
+
+    // --- Flux limits ---------------------------------------------------------------------------
+
+    /**
+     * The most vents or capacitors the refit screen would let you install on a hull this size.
+     *
+     * The base cap is per hull size, not per hull -- 50/30/20/10 from capital down to frigate. Flux
+     * Regulation raises it by a flat amount, and a template is authored long before we know which
+     * skills the character will have, so the allowance is included rather than assumed absent: an
+     * editor that refused a legal 25-vent destroyer would be wrong more annoyingly than one that
+     * permits an over-cap value the refit screen later trims.
+     *
+     * Read through the engine's own constants so it tracks a vanilla rebalance instead of hard-coding
+     * numbers that would quietly go stale.
+     */
+    fun maxFluxUpgrades(size: ShipAPI.HullSize?): Int {
+        val base = runCatching { CoreAutofitPlugin.getBaseMax(size ?: ShipAPI.HullSize.FRIGATE) }
+            .getOrDefault(DEFAULT_FLUX_CAP)
+        val skillAllowance = runCatching { maxOf(FluxRegulation.VENTS_BONUS, FluxRegulation.CAPACITORS_BONUS) }
+            .getOrDefault(0)
+        return base + skillAllowance
+    }
+
+    /** The cap before any skill raises it -- what the editor quotes to the player. */
+    fun baseFluxUpgradeCap(size: ShipAPI.HullSize?): Int =
+        runCatching { CoreAutofitPlugin.getBaseMax(size ?: ShipAPI.HullSize.FRIGATE) }
+            .getOrDefault(DEFAULT_FLUX_CAP)
+
+    /** Frigate-equivalent fallback for the case where the hull size cannot be read at all. */
+    private const val DEFAULT_FLUX_CAP = 10
+
+    private val NON_MOUNTABLE_WEAPON_TYPES = setOf(
+        WeaponAPI.WeaponType.BUILT_IN,
+        WeaponAPI.WeaponType.DECORATIVE,
+        WeaponAPI.WeaponType.SYSTEM,
+        WeaponAPI.WeaponType.STATION_MODULE,
+        WeaponAPI.WeaponType.LAUNCH_BAY,
+    )
+
+    fun sizeLabel(size: ShipAPI.HullSize?): String = when (size) {
+        ShipAPI.HullSize.FRIGATE -> "Frigate"
+        ShipAPI.HullSize.DESTROYER -> "Destroyer"
+        ShipAPI.HullSize.CRUISER -> "Cruiser"
+        ShipAPI.HullSize.CAPITAL_SHIP -> "Capital"
+        ShipAPI.HullSize.FIGHTER -> "Fighter"
+        else -> UNSPECIFIED
+    }
+
+    private fun roleLabel(spec: FighterWingSpecAPI): String =
+        spec.safeGet { role?.name }?.lowercase()?.replaceFirstChar { it.uppercase() } ?: UNSPECIFIED
+
+    private fun itemType(spec: SpecialItemSpecAPI): String {
+        fun has(tag: String) = spec.safeBool { hasTag(tag) }
+        return when {
+            has("colony_item") -> "Colony item"
+            has("package_bp") -> "Blueprint package"
+            has("single_bp") -> "Blueprint (any)"
+            has("modspec") -> "Hullmod spec"
+            has("ai_core") -> "AI core"
+            else -> UNSPECIFIED
+        }
+    }
+
+    private fun modName(mod: ModSpecAPI?): String = mod?.name?.trim().orEmpty().ifBlank { VANILLA }
+
+    private fun String?.clean(blankIfMissing: Boolean = false): String =
+        this?.trim().orEmpty().ifBlank { if (blankIfMissing) "" else UNSPECIFIED }
+
+    /**
+     * The flavour text the game keeps for a hull or weapon in `descriptions.csv`.
+     *
+     * The engine hands back a placeholder ("No description... yet") for anything undescribed, which
+     * is worse than showing nothing at all, so it is filtered out here rather than surfaced in a
+     * tooltip.
+     */
+    private fun describe(id: String, type: Description.Type): String {
+        val text = runCatching { Global.getSettings().getDescription(id, type)?.text1 }
+            .getOrNull()?.trim().orEmpty()
+        return if (text.isEmpty() || text.startsWith(NO_DESCRIPTION_PREFIX)) "" else text
+    }
+
+    private const val NO_DESCRIPTION_PREFIX = "No description"
+}
+
+// --- Spec-access helpers -------------------------------------------------------------------------
+//
+// Modded specs are not always complete, and a single mod that returns null from a getter the API
+// declares non-null would otherwise take the whole catalogue build down. Every optional read goes
+// through one of these, so a bad spec costs one blank field rather than an empty picker.
+
+internal inline fun <T, R> T.safeGet(block: T.() -> R?): R? = runCatching { block() }.getOrNull()
+internal inline fun <T> T.safeBool(block: T.() -> Boolean): Boolean = runCatching { block() }.getOrDefault(false)
+internal inline fun <T> T.safeInt(block: T.() -> Int): Int = runCatching { block() }.getOrDefault(0)
+internal inline fun <T> T.safeFloat(block: T.() -> Float): Float = runCatching { block() }.getOrDefault(0f)

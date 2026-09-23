@@ -1,0 +1,19 @@
+{
+	# Merged into the core settings.json "plugins" map. Every EveryFrameCombatPlugin listed here is
+	# added to every combat engine -- including the one the title screen runs behind the main menu,
+	# which is how StopBloatingMe and StarterPack get a per-frame tick there to inject their buttons.
+	# Each hook stands down on its own while its module is switched off.
+	"plugins": {
+		"stopBloatingMeTitleHook": "stopbloatingme.TitleScreenHook",
+		"starterPackTitleHook": "starterpack.TitleScreenHook",
+	},
+	# Rev. Eng. Private Arsenal: notification and faction-system intel icons.
+	"graphics": {
+		"PrivateArsenal": {
+			"notif": "graphics/icons/reports/notif.png"
+		},
+		"intel": {
+			"faction_systems": "graphics/icons/reports/notif.png"
+		}
+	}
+}

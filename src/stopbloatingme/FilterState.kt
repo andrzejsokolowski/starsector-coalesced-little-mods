@@ -1,0 +1,208 @@
+package stopbloatingme
+
+/** Which side of the blacklist the list should show. */
+enum class Visibility(val label: String) {
+    ALL("All"),
+    ALLOWED("Allowed"),
+    BLOCKED("Blocked"),
+}
+
+/** The four facet groups every category exposes. */
+enum class FacetGroup {
+    PRIMARY,
+    SECONDARY,
+    DESIGN,
+    MOD,
+}
+
+/**
+ * Filter selections for one category. Kept per-category so switching tabs doesn't throw away what
+ * you'd set up on the other one.
+ *
+ * Within a facet group the selected values are OR'd; across groups they're AND'd. An empty group
+ * means "no constraint", which is why clearing a group is the same as selecting everything in it.
+ */
+class CategoryFilter {
+    var search = ""
+    var visibility = Visibility.ALL
+
+    /** Stations, modules and built-in weapons are off by default; see [Entry.hidden]. */
+    var showHidden = false
+
+    val selected: Map<FacetGroup, MutableSet<String>> =
+        FacetGroup.entries.associateWith { LinkedHashSet<String>() }
+
+    fun of(group: FacetGroup): MutableSet<String> = selected.getValue(group)
+
+    fun clear() {
+        search = ""
+        visibility = Visibility.ALL
+        showHidden = false
+        selected.values.forEach { it.clear() }
+    }
+
+    /** True when anything at all is narrowing the list -- drives the "Clear filters" button state. */
+    fun isNarrowing(): Boolean =
+        search.isNotBlank() || visibility != Visibility.ALL || showHidden ||
+            selected.values.any { it.isNotEmpty() }
+
+    /** Cheap fingerprint of everything that affects the result, so we only re-filter when it moves. */
+    fun signature(): String = buildString {
+        append(search.trim().lowercase()).append('|')
+        append(visibility.name).append('|')
+        append(showHidden).append('|')
+        for (group in FacetGroup.entries) {
+            append(group.name).append('=')
+            of(group).sorted().joinTo(this, ",")
+            append(';')
+        }
+    }
+}
+
+/**
+ * Session state of the browser: which tab is open and how each one is filtered.
+ *
+ * Deliberately a singleton that outlives the panel, so closing and reopening the browser puts you
+ * back where you were. Blacklist *membership* lives in [BlacklistStore]; this is only which view of
+ * it you're looking at.
+ */
+object FilterState {
+
+    var category = Category.SHIPS
+
+    private val filters: Map<Category, CategoryFilter> =
+        Category.entries.associateWith { CategoryFilter() }
+
+    fun of(category: Category): CategoryFilter = filters.getValue(category)
+
+    fun current(): CategoryFilter = of(category)
+
+    /**
+     * The entries the list should show, in index order (already sorted by name).
+     *
+     * Ordered cheapest-test-first: the facet checks are set lookups on interned-ish strings and the
+     * substring search runs last, so a narrow facet selection short-circuits most of the scan. Over
+     * 8,644 hulls this is comfortably sub-millisecond, which is why the browser can afford to
+     * re-filter on a signature change rather than maintaining incremental indexes.
+     */
+    fun apply(category: Category): List<Entry> {
+        val filter = of(category)
+        val query = filter.search.trim().lowercase()
+        val blacklist = BlacklistStore.ids(category)
+
+        val primary = filter.of(FacetGroup.PRIMARY)
+        val secondary = filter.of(FacetGroup.SECONDARY)
+        val design = filter.of(FacetGroup.DESIGN)
+        val mods = filter.of(FacetGroup.MOD)
+
+        val out = ArrayList<Entry>(256)
+        for (entry in ContentIndex.entries(category)) {
+            if (entry.hidden && !filter.showHidden) continue
+
+            val blocked = blacklist.contains(entry.id)
+            when (filter.visibility) {
+                Visibility.ALLOWED -> if (blocked) continue
+                Visibility.BLOCKED -> if (!blocked) continue
+                Visibility.ALL -> {}
+            }
+
+            if (primary.isNotEmpty() && !primary.contains(entry.primary)) continue
+            if (secondary.isNotEmpty() && !secondary.contains(entry.secondary)) continue
+            if (design.isNotEmpty() && !design.contains(entry.design)) continue
+            if (mods.isNotEmpty() && !mods.contains(entry.sourceMod)) continue
+            if (query.isNotEmpty() && !entry.searchBlob.contains(query)) continue
+
+            out += entry
+        }
+        return out
+    }
+
+    // --- Collapsible facet groups --------------------------------------------------------------
+
+    /** Above this many values a group starts folded, so one long group can't bury the ones below it. */
+    private const val COLLAPSE_THRESHOLD = 12
+
+    private val collapsed = HashMap<Pair<Category, FacetGroup>, Boolean>()
+
+    fun isCollapsed(category: Category, group: FacetGroup): Boolean =
+        collapsed.getOrPut(category to group) {
+            facetValues(category, group).size > COLLAPSE_THRESHOLD
+        }
+
+    fun toggleCollapsed(category: Category, group: FacetGroup) {
+        collapsed[category to group] = !isCollapsed(category, group)
+    }
+
+    // --- Facet values --------------------------------------------------------------------------
+
+    private val facetCache = HashMap<Pair<Category, FacetGroup>, List<Pair<String, Int>>>()
+
+    /**
+     * Drops the derived facet lists and their fold states.
+     *
+     * Called from [ContentIndex.invalidate] when the catalogue itself moves underneath us, which in
+     * practice means one thing: a campaign was loaded and the bar quests that only exist while one
+     * is running became known. Everything here is rebuilt on demand, so clearing is all it takes.
+     */
+    fun invalidateCaches() {
+        facetCache.clear()
+        collapsed.clear()
+    }
+
+    /**
+     * Distinct values of [group] within [category], each with how many entries carry it, ordered for
+     * display. Size and mount-size get their natural order; everything else falls back to
+     * most-common-first so the values worth clicking float to the top of a long list.
+     *
+     * Cached: the index is immutable for the process, and this runs on every left-column rebuild
+     * (which happens on every facet click).
+     */
+    fun facetValues(category: Category, group: FacetGroup): List<Pair<String, Int>> =
+        facetCache.getOrPut(category to group) { computeFacetValues(category, group) }
+
+    private fun computeFacetValues(category: Category, group: FacetGroup): List<Pair<String, Int>> {
+        val counts = LinkedHashMap<String, Int>()
+        for (entry in ContentIndex.entries(category)) {
+            if (entry.hidden) continue          // facet lists describe the default view
+            val value = entry.valueFor(group)
+            if (value.isBlank()) continue
+            counts[value] = (counts[value] ?: 0) + 1
+        }
+        val order = scaleOrder(category, group)
+        return counts.entries
+            .sortedWith(compareBy({ order[it.key] ?: Int.MAX_VALUE }, { it.key.lowercase() }))
+            .map { it.key to it.value }
+    }
+
+    private fun Entry.valueFor(group: FacetGroup): String = when (group) {
+        FacetGroup.PRIMARY -> primary
+        FacetGroup.SECONDARY -> secondary
+        FacetGroup.DESIGN -> design
+        FacetGroup.MOD -> sourceMod
+    }
+
+    private val HULL_SIZE_ORDER = rank("Frigate", "Destroyer", "Cruiser", "Capital", "Fighter")
+    private val MOUNT_SIZE_ORDER = rank("Small", "Medium", "Large")
+    private val FREQUENCY_ORDER = rank("Very common", "Common", "Uncommon", "Rare", "Never")
+
+    private fun rank(vararg values: String): Map<String, Int> =
+        values.withIndex().associate { (index, value) -> value to index }
+
+    /**
+     * Facet values are alphabetical, which is the only order you can actually search by eye once a
+     * group runs to 99 source mods or a hundred design types.
+     *
+     * The three exceptions are genuine scales, where alphabetical would be actively worse: hull size
+     * reads Frigate-to-Capital, not Capital-to-Frigate, mount size reads Small-to-Large, and bar
+     * quest frequency reads Very common-to-Rare. These are matched per category *and* group rather
+     * than by value, so the ship Designation group -- a free-text field that happens to contain the
+     * words "Frigate" and "Cruiser" among many others -- stays purely alphabetical instead of
+     * hoisting four arbitrary entries to the top.
+     */
+    private fun scaleOrder(category: Category, group: FacetGroup): Map<String, Int> = when {
+        category == Category.SHIPS && group == FacetGroup.PRIMARY -> HULL_SIZE_ORDER
+        category == Category.WEAPONS && group == FacetGroup.SECONDARY -> MOUNT_SIZE_ORDER
+        category == Category.BAR_EVENTS && group == FacetGroup.PRIMARY -> FREQUENCY_ORDER
+        else -> emptyMap()
+    }
+}
