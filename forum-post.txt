@@ -1,0 +1,44 @@
+[center][img width=220]https://github.com/andrzejsokolowski/starsector-coalesced-little-mods/blob/main/CoalescedLittleModsIconBig.png?raw=true[/img]
+[size=28pt][url=https://github.com/andrzejsokolowski/starsector-coalesced-little-mods/releases/latest][b]Coalesced Little Mods[/b][/url][/size]
+[url=https://github.com/andrzejsokolowski/starsector-coalesced-little-mods/releases/latest][img]https://img.shields.io/github/downloads/andrzejsokolowski/starsector-coalesced-little-mods/total?style=for-the-badge&label=download[/img][/url]  [url=https://github.com/andrzejsokolowski/starsector-coalesced-little-mods][img]https://img.shields.io/github/v/release/andrzejsokolowski/starsector-coalesced-little-mods?display_name=tag&sort=semver&style=for-the-badge&label=source[/img][/url]
+[/center]
+[center][b]
+WHAT DOES THIS MOD DO?
+- Puts eight of my small mods into one download. Each one has its own on/off switch.
+
+
+One mod in the list instead of eight. Don't want one of them? Switch it off in LunaLib's settings and it is gone after a restart.
+
+The code is fully open source. You don't have to credit me. Claude Code built this anyway.
+[color=red]Requires [b]LunaLib[/b] and [b]LazyLib[/b].[/color]
+[/b][/center]
+[center]
+[hr][center][size=12pt][b]Modules[/b][/size][/center][hr]
+[list]
+[li][b][url=https://fractalsoftworks.com/forum/index.php?topic=35130]Cloning[/url][/b]: an industry path that massively increases population growth, at the cost of colony stability.[/li]
+[li][b]Rev. Eng. Private Arsenal[/b]: an industry that deconstructs your weapons, fighters and ships, then sells them back in a private arsenal that only you can use.[/li]
+[li][b][url=https://fractalsoftworks.com/forum/index.php?topic=35850]StopBloatingMe[/url][/b]: browse ships, weapons, fighters, commodities, special items and bar quests from the main menu, and blacklist the ones you never want to see.[/li]
+[li][b][url=https://fractalsoftworks.com/forum/index.php?topic=35952]StopStackingMe[/url][/b]: one weapon sprite per cargo stack instead of a pile.[/li]
+[li][b][url=https://fractalsoftworks.com/forum/index.php?topic=35978]Intel Renewed[/url][/b]: declutters the intel screen. Hide kinds of intel, categories and single entries, and silence their popups.[/li]
+[li][b][url=https://fractalsoftworks.com/forum/index.php?topic=35619]Hullmods - Renewed[/url][/b]: a filter panel for the refit hull-mod picker, with search, favourites, a blacklist and custom groups.[/li]
+[li][b][url=https://fractalsoftworks.com/forum/index.php?topic=35993]Gambling Den[/url][/b]: sell surplus ships for tokens at large ports, then play Slots, Pachinko, Pinball, Blackjack and the Relic Jackpot.[/li]
+[li][b][url=https://fractalsoftworks.com/forum/index.php?topic=35856]StarterPack[/url][/b]: build a starting fleet, cargo and character from the main menu and apply it to new games.[/li]
+[/list]
+[hr][center][size=12pt][b]Settings[/b][/size][/center][hr]
+[list]
+[li]In LunaLib's settings menu ([b]Shift+F2[/b] in the campaign), under [b]Coalesced Little Mods[/b].[/li]
+[li]The [b]Modules[/b] tab has one switch per module, all on by default. A switch takes effect the next time you start the game.[/li]
+[li]Every module keeps its own settings on its own tab.[/li]
+[/list]
+[/center]
+[spoiler=FAQ]
+[b]I already use some of these separately. What do I do?[/b]
+Disable the separate versions, then enable the pack. The game refuses to start if both are on, and tells you which ones to disable. Your saves keep working, and the pack copies your settings from the separate mods the first time it starts.
+[b]What happens when I switch a module off?[/b]
+It stops. Its buttons, dialogue options and menus disappear, and its buildings can no longer be built. Buildings you already have keep working, and nothing is removed from your save. Switch it back on and everything is back.
+[b]Does the pack change the separate mods' settings?[/b]
+No. It only reads them once, so they are still there if you go back.
+[/spoiler]
+[spoiler=Credits]
+Gambling Den's blackjack is adapted from [b]Interastral Peace Casino[/b] by Emanon6 and WolframSegler. The playing cards are [b]SVG-cards[/b] by David Bellot, Huub de Beer and contributors. Several modules use [b]UIFramework[/b] by Starficz. Full notices are in THIRD_PARTY_NOTICES.txt in the download.
+[/spoiler]
