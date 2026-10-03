@@ -26,7 +26,8 @@ repa_re_days_beta,Research days - beta core,Int,15,,Days to reverse-engineer one
 repa_re_days_alpha,Research days - alpha core,Int,5,,Days to reverse-engineer one item with an alpha core assigned.,1,1000,Private Arsenal
 repa_re_days_omega,Research days - omega core,Int,2,,Days to reverse-engineer one item with an omega core assigned.,1,1000,Private Arsenal
 repa_re_drone_day_reduction,Drone Replicator day reduction,Int,1,,Flat days removed from research time while a Combat Drone Replicator is installed in the hub.,0,100,Private Arsenal
-repa_re_improve_blueprint_copies,Improve blueprint copies,Int,1,,Blueprint copies an improved hub also produces per item. Un-improved hubs produce no blueprint and only stock the Private Arsenal.,1,10,Private Arsenal
+repa_re_improve_blueprint_copies,Improve blueprint copies,Int,1,,Blueprint copies an improved hub also produces per item. Un-improved hubs produce no blueprint and only stock the Private Arsenal. Not used while Add blueprints directly to known blueprints is on.,1,10,Private Arsenal
+repa_re_learn_blueprints,Add blueprints directly to known blueprints,Boolean,false,,"When on, an improved hub adds each reverse-engineered item straight to your known blueprints, instead of putting blueprint items in storage.",,,Private Arsenal
 ,,,,,,,,
 repa_header_slots,Research slots Header,Header,Research slots,,,,,Private Arsenal
 repa_re_base_research_slots,Research slots per hub tier,Int,2,,Items researched in parallel per type equals this value times the hub tier divided by the item slot size. 2 gives 6 weapon slots at tier 3.,1,50,Private Arsenal

@@ -6,7 +6,7 @@ switched off on their own.
 | Module | Built from | What it does |
 | --- | --- | --- |
 | Cloning | [Cloning](https://fractalsoftworks.com/forum/index.php?topic=35130) 0.2.1 | Adds an industry path that massively increases population growth, at the cost of colony stability. |
-| Rev. Eng. Private Arsenal | Reverse Engineered Private Arsenal 1.2.4 | Adds an industry that deconstructs your weapons, fighters and ships and then sells them back in a private arsenal that only you can use. |
+| Rev. Eng. Private Arsenal | Reverse Engineered Private Arsenal 1.3.0 | Adds an industry that deconstructs your weapons, fighters and ships and then sells them back in a private arsenal that only you can use. |
 | StopBloatingMe | [StopBloatingMe](https://fractalsoftworks.com/forum/index.php?topic=35850) 1.0.0 | Browse ships, weapons, fighters, commodities, special items and bar quests from the main menu, and hide the ones you never want to see. |
 | StopStackingMe | [StopStackingMe](https://fractalsoftworks.com/forum/index.php?topic=35952) 1.0.2 | Shows one weapon sprite per stack in cargo and the weapon picker instead of a pile. |
 | Intel Renewed | [Intel Renewed](https://fractalsoftworks.com/forum/index.php?topic=35978) 0.3.0 | Declutters the intel screen: hide kinds of intel, categories and single entries, and silence their popups. |

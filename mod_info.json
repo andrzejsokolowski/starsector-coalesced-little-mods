@@ -3,7 +3,7 @@
   "name": "Coalesced Little Mods",
   "author": "Oddisz",
   "utility": "false",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Eight of Oddisz's small mods in one: Cloning, Rev. Eng. Private Arsenal, StopBloatingMe, StopStackingMe, Intel Renewed, Hullmods - Renewed, Gambling Den and StarterPack. Cloning, Private Arsenal and Gambling Den each have an on/off switch in the LunaLib settings, on by default. Replaces the separate versions of these mods: disable those before enabling this one.",
   "gameVersion": "0.98a-RC8",
   "jars": ["jars/CoalescedLittleMods.jar"],
