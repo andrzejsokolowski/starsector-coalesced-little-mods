@@ -29,7 +29,7 @@ public enum ClmModule {
     HULLMODS_RENEWED(null, "Hullmods - Renewed", "hullmods_renewed",
             "hullmodsrenewed"),
     GAMBLING_DEN("clm_module_gambling_den", "Gambling Den", "gambling_den",
-            "gamblingden", "hullmoddispenser"),
+            "gamblingden"),
     STARTER_PACK(null, "StarterPack", "starterpack",
             "starterpack");
 

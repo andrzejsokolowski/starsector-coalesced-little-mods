@@ -11,7 +11,7 @@ switched off on their own.
 | StopStackingMe | [StopStackingMe](https://fractalsoftworks.com/forum/index.php?topic=35952) 1.0.2 | Shows one weapon sprite per stack in cargo and the weapon picker instead of a pile. |
 | Intel Renewed | [Intel Renewed](https://fractalsoftworks.com/forum/index.php?topic=35978) 0.3.0 | Declutters the intel screen: hide kinds of intel, categories and single entries, and silence their popups. |
 | Hullmods - Renewed | [Hullmods - Renewed](https://fractalsoftworks.com/forum/index.php?topic=35619) 1.6.1 | Adds a filter panel to the refit hull-mod picker, with search, favourites, a blacklist and custom groups. |
-| Gambling Den | [Gambling Den](https://fractalsoftworks.com/forum/index.php?topic=35993) 1.6.4 | Sell surplus ships for tokens at large ports and play Slots, Pachinko, Pinball, Blackjack and the Relic Jackpot. |
+| Gambling Den | [Gambling Den](https://fractalsoftworks.com/forum/index.php?topic=35993) 1.6.5 | Sell surplus ships for tokens at large ports and play Slots, Pachinko, Pinball, Blackjack and the Relic Jackpot. |
 | StarterPack | [StarterPack](https://fractalsoftworks.com/forum/index.php?topic=35856) 1.1.5 | Build a starting fleet, cargo and character from the main menu and apply it to new games. |
 
 ## Settings
