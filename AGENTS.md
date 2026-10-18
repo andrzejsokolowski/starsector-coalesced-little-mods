@@ -3,6 +3,16 @@
 A pack of eight of Andrzej's mods. The workspace `AGENTS.md` one folder up still governs releases,
 packaging, Git identity and communication.
 
+## Notion
+
+Tasks, history and test lists: the **Coalesced Little Mods board** in Andrzej's Notion, under
+**Starsector mods** (`collection://e2fbfaac-141f-4282-bf80-843626e8b896`). A fix brought over from
+a bundled mod also gets a ticket on that mod's own board. Working rules and game API notes:
+**Claude Information** (`collection://7bf9b1d6-b9e5-4b62-87f1-757bbaa51919`), starting with
+"Start here: working on Starsector mods through Notion". Read the board before working, give every
+task a ticket (ticket ids start with CLM) and keep it current. The Notion tools are deferred: load
+them with ToolSearch first.
+
 ## Layout
 
 - `src/coalescedlittlemods/` holds the pack itself: `ClmModule` (module list and switches),
