@@ -12,7 +12,7 @@ switched off on their own.
 | Intel Renewed | [Intel Renewed](https://fractalsoftworks.com/forum/index.php?topic=35978) 0.3.0 | Declutters the intel screen: hide kinds of intel, categories and single entries, and silence their popups. |
 | Hullmods - Renewed | [Hullmods - Renewed](https://fractalsoftworks.com/forum/index.php?topic=35619) 1.6.1 | Adds a filter panel to the refit hull-mod picker, with search, favourites, a blacklist and custom groups. |
 | Gambling Den | [Gambling Den](https://fractalsoftworks.com/forum/index.php?topic=35993) 1.6.5 | Sell surplus ships for tokens at large ports and play Slots, Pachinko, Pinball, Blackjack and the Relic Jackpot. |
-| StarterPack | [StarterPack](https://fractalsoftworks.com/forum/index.php?topic=35856) 1.1.5 | Build a starting fleet, cargo and character from the main menu and apply it to new games. |
+| StarterPack | [StarterPack](https://fractalsoftworks.com/forum/index.php?topic=35856) 1.2.0 | Build a starting fleet, cargo and character from the main menu and apply it to new games. |
 
 ## Settings
 
